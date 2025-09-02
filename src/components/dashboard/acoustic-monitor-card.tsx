@@ -1,23 +1,27 @@
+
 "use client";
 
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Ear, Waves, HeartPulse, Lightbulb, Mic, Square, Loader2 } from "lucide-react";
 import { acousticData } from "@/lib/mock-data";
 import { analyzeCough } from "@/ai/flows/analyze-cough";
+import type { AcousticData } from "@/lib/types";
 
 export function AcousticMonitorCard() {
-  const { coughFrequency, wheezing, breathingRate } = useMemo(() => {
-    const randomIndex = Math.floor(Math.random() * acousticData.history.length);
-    return acousticData.history[randomIndex];
-  }, []);
-
+  const [displayData, setDisplayData] = useState<AcousticData | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [analysis, setAnalysis] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+
+  useEffect(() => {
+    // Select random data on the client-side to avoid hydration mismatch
+    const randomIndex = Math.floor(Math.random() * acousticData.history.length);
+    setDisplayData(acousticData.history[randomIndex]);
+  }, []);
 
   const handleStartRecording = async () => {
     setAnalysis("");
@@ -80,7 +84,7 @@ export function AcousticMonitorCard() {
             </div>
             <span className="font-medium">Cough Frequency</span>
           </div>
-          <span className="text-lg font-semibold">{coughFrequency} <span className="text-sm font-normal text-muted-foreground">/hr</span></span>
+          <span className="text-lg font-semibold">{displayData?.coughFrequency ?? '...'} <span className="text-sm font-normal text-muted-foreground">/hr</span></span>
         </div>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -89,7 +93,7 @@ export function AcousticMonitorCard() {
             </div>
             <span className="font-medium">Wheeze Detection</span>
           </div>
-          <span className={`text-lg font-semibold ${wheezing ? 'text-destructive' : 'text-accent'}`}>{wheezing ? "Detected" : "None"}</span>
+          <span className={`text-lg font-semibold ${displayData?.wheezing ? 'text-destructive' : 'text-accent'}`}>{displayData ? (displayData.wheezing ? "Detected" : "None") : '...'}</span>
         </div>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -98,7 +102,7 @@ export function AcousticMonitorCard() {
             </div>
             <span className="font-medium">Breathing Rate</span>
           </div>
-          <span className="text-lg font-semibold">{breathingRate} <span className="text-sm font-normal text-muted-foreground">bpm</span></span>
+          <span className="text-lg font-semibold">{displayData?.breathingRate ?? '...'} <span className="text-sm font-normal text-muted-foreground">bpm</span></span>
         </div>
 
         <div className="border-t pt-4">
