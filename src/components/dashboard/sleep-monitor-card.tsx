@@ -5,8 +5,16 @@ import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Moon, Square, Waves, HeartPulse, Ear, AlarmClock, BellOff, Loader2 } from "lucide-react";
+import { Moon, Square, Waves, HeartPulse, Ear, AlarmClock, BellOff, Loader2, History } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
+type SleepSessionLog = {
+  startTime: Date;
+  duration: number; // in seconds
+  totalCoughs: number;
+  wheezingDetected: boolean;
+};
 
 export function SleepMonitorCard() {
   const [isMonitoring, setIsMonitoring] = useState(false);
@@ -16,8 +24,10 @@ export function SleepMonitorCard() {
     breathingRate: 14,
     wheezing: false,
   });
+  const [sessionLog, setSessionLog] = useState<SleepSessionLog[]>([]);
   const [showAlert, setShowAlert] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const { toast } = useToast();
 
@@ -34,6 +44,8 @@ export function SleepMonitorCard() {
         audioRef.current.pause();
         audioRef.current = null;
       }
+      // Stop media stream if component unmounts
+      mediaRecorderRef.current?.stream.getTracks().forEach(track => track.stop());
     };
   }, []);
 
@@ -45,13 +57,12 @@ export function SleepMonitorCard() {
         // Simulate data fluctuations
         const coughChance = Math.random();
         let newCoughFrequency = liveData.coughFrequency;
-        // Increase chance of coughs as time goes on to simulate worsening condition
-        if (coughChance < 0.15 + (elapsedTime / 300)) { // 15% base chance, increasing over 5 mins
-          newCoughFrequency = Math.min(60, liveData.coughFrequency + Math.floor(Math.random() * 3) + 1);
+        if (coughChance < 0.15 + (elapsedTime / 300)) {
+          newCoughFrequency = liveData.coughFrequency + 1;
         }
 
-        const newBreathingRate = 18 + Math.floor(Math.random() * 5); // Simulate elevated breathing rate
-        const newWheezing = Math.random() < 0.4; // 40% chance of wheezing
+        const newBreathingRate = 18 + Math.floor(Math.random() * 5);
+        const newWheezing = liveData.wheezing || Math.random() < 0.4;
 
         setLiveData({
           coughFrequency: newCoughFrequency,
@@ -74,9 +85,7 @@ export function SleepMonitorCard() {
 
       }, 2000); // Update every 2 seconds
     } else {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+      if (intervalRef.current) clearInterval(intervalRef.current);
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.currentTime = 0;
@@ -85,16 +94,64 @@ export function SleepMonitorCard() {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [isMonitoring, liveData.coughFrequency, elapsedTime, toast]);
+  }, [isMonitoring, liveData.coughFrequency, liveData.wheezing, elapsedTime, toast]);
+  
+  const handleStartMonitoring = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorderRef.current = new MediaRecorder(stream);
+      mediaRecorderRef.current.start();
+      
+      setIsMonitoring(true);
+      toast({
+        title: "Sleep Mode Activated",
+        description: "Microphone is on and monitoring has begun.",
+      });
+
+    } catch (err) {
+      console.error("Error accessing microphone:", err);
+      toast({
+        variant: "destructive",
+        title: "Microphone Error",
+        description: "Could not access microphone. Please grant permission in your browser settings.",
+      });
+    }
+  };
+
+  const handleStopMonitoring = () => {
+      // Create and save the log
+      const newLog: SleepSessionLog = {
+        startTime: new Date(Date.now() - elapsedTime * 1000),
+        duration: elapsedTime,
+        totalCoughs: liveData.coughFrequency,
+        wheezingDetected: liveData.wheezing,
+      };
+      setSessionLog(prevLogs => [newLog, ...prevLogs]);
+
+      // Stop recording and release microphone
+      if (mediaRecorderRef.current) {
+          mediaRecorderRef.current.stop();
+          mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+          mediaRecorderRef.current = null;
+      }
+
+      // Reset state
+      setIsMonitoring(false);
+      setElapsedTime(0);
+      setLiveData({ coughFrequency: 0, breathingRate: 14, wheezing: false });
+      setShowAlert(false);
+
+       toast({
+        title: "Sleep Mode Deactivated",
+        description: `Session of ${formatTime(elapsedTime)} logged successfully.`,
+      });
+  };
 
   const handleToggleMonitoring = () => {
     if (isMonitoring) {
-        setIsMonitoring(false);
-        setElapsedTime(0);
-        setLiveData({ coughFrequency: 0, breathingRate: 14, wheezing: false });
-        setShowAlert(false);
+      handleStopMonitoring();
     } else {
-        setIsMonitoring(true);
+      handleStartMonitoring();
     }
   };
 
@@ -107,9 +164,11 @@ export function SleepMonitorCard() {
   };
 
   const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
-    const secs = (seconds % 60).toString().padStart(2, '0');
-    return `${mins}:${secs}`;
+    const hours = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    if (hours > 0) return `${hours}h ${mins}m ${secs}s`;
+    return `${mins}m ${secs}s`;
   };
 
   return (
@@ -118,7 +177,7 @@ export function SleepMonitorCard() {
         <CardTitle>Sleep Mode</CardTitle>
         <CardDescription>Activate to monitor respiratory events while you sleep. An alarm will sound if high-risk events are detected.</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6">
         <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
            <div className="flex items-center gap-4">
              <Button onClick={handleToggleMonitoring}>
@@ -143,8 +202,8 @@ export function SleepMonitorCard() {
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3"><Waves className="h-5 w-5 text-cyan-400" /><span>Cough Freq.</span></div>
-                <Badge variant={liveData.coughFrequency > 40 ? "destructive" : "secondary"}>{liveData.coughFrequency} <span className="text-xs font-normal ml-1">/hr</span></Badge>
+                <div className="flex items-center gap-3"><Waves className="h-5 w-5 text-cyan-400" /><span>Total Coughs</span></div>
+                <Badge variant={liveData.coughFrequency > 40 ? "destructive" : "secondary"}>{liveData.coughFrequency}</Badge>
               </div>
               <div className="flex items-center justify-between">
                  <div className="flex items-center gap-3"><HeartPulse className="h-5 w-5 text-cyan-400" /><span>Breathing Rate</span></div>
@@ -157,6 +216,38 @@ export function SleepMonitorCard() {
             </div>
           </div>
         )}
+
+        <div>
+          <h3 className="text-lg font-medium mb-2 flex items-center gap-2"><History /> Session History</h3>
+          {sessionLog.length > 0 ? (
+            <div className="border rounded-md">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Start Time</TableHead>
+                    <TableHead>Duration</TableHead>
+                    <TableHead>Total Coughs</TableHead>
+                    <TableHead className="text-right">Wheezing</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sessionLog.map((log, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{log.startTime.toLocaleString()}</TableCell>
+                      <TableCell>{formatTime(log.duration)}</TableCell>
+                      <TableCell>{log.totalCoughs}</TableCell>
+                      <TableCell className="text-right">{log.wheezingDetected ? "Detected" : "None"}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <p className="text-center text-muted-foreground py-8 border rounded-md">
+              No sleep sessions logged yet. Activate sleep mode to start monitoring.
+            </p>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
