@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Ear, Waves, HeartPulse } from "lucide-react";
+import { Ear, Waves, HeartPulse, Lightbulb } from "lucide-react";
 import { acousticData } from "@/lib/mock-data";
 
 export function AcousticMonitorCard() {
@@ -38,6 +38,17 @@ export function AcousticMonitorCard() {
             <span className="font-medium">Breathing Rate</span>
           </div>
           <span className="text-lg font-semibold">{breathingRate} <span className="text-sm font-normal text-muted-foreground">bpm</span></span>
+        </div>
+        <div className="flex items-start justify-between border-t pt-4">
+          <div className="flex items-start gap-3">
+            <div className="bg-secondary p-2 rounded-md">
+              <Lightbulb className="h-5 w-5 text-secondary-foreground" />
+            </div>
+            <div>
+                <span className="font-medium">Daily Tip</span>
+                <p className="text-sm text-muted-foreground">Consider using a humidifier and staying hydrated to soothe your airway.</p>
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>
