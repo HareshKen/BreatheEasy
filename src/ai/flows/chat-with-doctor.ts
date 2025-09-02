@@ -56,14 +56,10 @@ const prompt = ai.definePrompt({
 
   Conversation History:
   {{#each messages}}
-    {{#if (this.role === 'user')}}
-      User: {{{content}}}
-    {{else}}
-      Doctor: {{{content}}}
-    {{/if}}
+    {{{this.role}}}: {{{this.content}}}
   {{/each}}
   
-  Based on the health data and the conversation history, provide a helpful and encouraging response to the latest user message.
+  Based on the health data and the conversation history, provide a helpful and encouraging response to the latest user message. Your role is "model".
   `,
 });
 
