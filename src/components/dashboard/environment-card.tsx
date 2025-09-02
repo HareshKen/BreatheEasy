@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Wind, Leaf, Loader2, AlertTriangle } from "lucide-react";
-import { getEnvironmentalData } from "@/ai/flows/get-environmental-data";
+import { environmentalData as mockEnvironmentalData } from "@/lib/mock-data";
 import type { EnvironmentalData } from "@/lib/types";
 
 type EnvironmentCardProps = {
@@ -22,54 +22,25 @@ export function EnvironmentCard({ onDataFetched, onLoadingChange }: EnvironmentC
   }, [isLoading, onLoadingChange]);
 
   useEffect(() => {
-    const fetchRealTimeData = async (position: GeolocationPosition) => {
-      try {
-        const result = await getEnvironmentalData({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        });
-        const fetchedData = {
-          aqi: result.aqi,
-          pollen: result.pollen,
-          location: result.locationName,
-        };
-        setData(fetchedData);
-        onDataFetched(fetchedData);
-      } catch (e) {
-        console.error("Error fetching environmental data:", e);
-        setError("Could not retrieve environmental data at this time.");
-        onDataFetched(null);
-      } finally {
-        setIsLoading(false);
-      }
+    const fetchMockData = () => {
+      setIsLoading(true);
+      // Simulate network delay
+      setTimeout(() => {
+        try {
+          const mockData = mockEnvironmentalData.today;
+          setData(mockData);
+          onDataFetched(mockData);
+        } catch (e) {
+          console.error("Error loading mock environmental data:", e);
+          setError("Could not retrieve environmental data at this time.");
+          onDataFetched(null);
+        } finally {
+          setIsLoading(false);
+        }
+      }, 500);
     };
 
-    const handleError = (error: GeolocationPositionError) => {
-      switch(error.code) {
-        case error.PERMISSION_DENIED:
-          setError("Location access was denied. Please enable it in your browser settings.");
-          break;
-        case error.POSITION_UNAVAILABLE:
-          setError("Location information is unavailable.");
-          break;
-        case error.TIMEOUT:
-          setError("The request to get user location timed out.");
-          break;
-        default:
-          setError("An unknown error occurred while fetching location.");
-          break;
-      }
-      onDataFetched(null);
-      setIsLoading(false);
-    };
-
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(fetchRealTimeData, handleError);
-    } else {
-      setError("Geolocation is not supported by this browser.");
-      onDataFetched(null);
-      setIsLoading(false);
-    }
+    fetchMockData();
   }, [onDataFetched]);
 
   const getAqiColor = (value: number) => {
