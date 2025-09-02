@@ -18,9 +18,8 @@ export function AcousticMonitorCard() {
   const audioChunksRef = useRef<Blob[]>([]);
 
   useEffect(() => {
-    // Select random data on the client-side to avoid hydration mismatch
-    const randomIndex = Math.floor(Math.random() * acousticData.history.length);
-    setDisplayData(acousticData.history[randomIndex]);
+    // Use today's consistent, pre-generated data
+    setDisplayData(acousticData.today);
   }, []);
 
   const handleStartRecording = async () => {

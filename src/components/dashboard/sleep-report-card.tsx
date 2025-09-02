@@ -18,15 +18,8 @@ export function SleepReportCard() {
   const [report, setReport] = useState<SleepReport | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   
-  // Simulate nightly data from mock data by picking a random day
-  const nightlyData = ((): { breathingRate: number, coughFrequency: number, wheezing: boolean } => {
-    const randomDay = acousticData.history[Math.floor(Math.random() * acousticData.history.length)];
-    return {
-      breathingRate: randomDay.breathingRate,
-      coughFrequency: randomDay.coughFrequency,
-      wheezing: randomDay.wheezing,
-    };
-  })();
+  // Use the same consistent data for "today" as the acoustic monitor card.
+  const nightlyData = acousticData.today;
 
   const handleGenerateReport = async () => {
     setIsLoading(true);
