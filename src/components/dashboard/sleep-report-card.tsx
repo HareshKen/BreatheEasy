@@ -19,14 +19,12 @@ export function SleepReportCard() {
   const [isLoading, setIsLoading] = useState(false);
   
   // Simulate nightly data from mock data by picking a random day
-  const nightlyData = ((): { μ_BR: number, σ_BR: number, CPH: number, P_Wheeze: number, EPH: number } => {
+  const nightlyData = ((): { breathingRate: number, coughFrequency: number, wheezing: boolean } => {
     const randomDay = acousticData.history[Math.floor(Math.random() * acousticData.history.length)];
     return {
-      μ_BR: randomDay.breathingRate,
-      σ_BR: Math.round(Math.random() * 5 * 10) / 10, // Simulate stability
-      CPH: randomDay.coughFrequency,
-      P_Wheeze: randomDay.wheezing ? Math.floor(Math.random() * 10) : 0, // Simulate wheeze percentage
-      EPH: Math.floor(Math.random() * 8), // Simulate other disturbances
+      breathingRate: randomDay.breathingRate,
+      coughFrequency: randomDay.coughFrequency,
+      wheezing: randomDay.wheezing,
     };
   })();
 
