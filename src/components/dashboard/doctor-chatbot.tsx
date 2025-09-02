@@ -2,13 +2,14 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { chatWithDoctor } from "@/ai/flows/chat-with-doctor";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Send, Sparkles, Bot, User, Loader2 } from "lucide-react";
-import type { AcousticData, EnvironmentalData, SleepReport, ChatMessage } from "@/lib/types";
+import type { AcousticData, EnvironmentalData, SleepReport, ChatMessage, HealthData } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 
 type DoctorChatbotProps = {
@@ -17,44 +18,6 @@ type DoctorChatbotProps = {
   environmentalData: EnvironmentalData | null;
   sleepReport: SleepReport | null;
 };
-
-// Mock implementation to avoid API rate limits during development.
-const generateMockChatResponse = (
-  input: string,
-  { riskScore, sleepReport }: DoctorChatbotProps
-): string => {
-  const lowerInput = input.toLowerCase();
-
-  if (lowerInput.includes("sleep")) {
-    if (!sleepReport) {
-      return "I don't have your latest sleep report yet. Please generate it first, and then I can give you some advice!";
-    }
-    if (sleepReport.sleepScore > 80) {
-      return `That's great to hear you're focusing on sleep! Your last sleep score was ${sleepReport.sleepScore}, which is excellent. Keep up the great work with your consistent sleep schedule and relaxing bedtime routine.`;
-    }
-    if (sleepReport.sleepScore < 50) {
-      return `Improving sleep is a great goal, especially since your last score was ${sleepReport.sleepScore}. To help improve it, I recommend establishing a consistent sleep schedule, even on weekends, and creating a relaxing bedtime routine, like reading or listening to calm music.`;
-    }
-    return `Your last sleep score was ${sleepReport.sleepScore}, which is a good start. To improve it further, try to avoid screens an hour before bed and ensure your bedroom is dark and quiet.`;
-  }
-
-  if (lowerInput.includes("risk score") || lowerInput.includes("risk")) {
-    if (riskScore > 66) {
-      return `I see your risk score is currently high at ${riskScore}. This is likely due to recent symptom logs. I recommend using your rescue inhaler as prescribed, avoiding strenuous activities, and monitoring your symptoms closely. Please contact your doctor if they worsen.`;
-    }
-    if (riskScore > 33) {
-      return `Your risk score is moderate right now, at ${riskScore}. This is a good time to be mindful of environmental triggers like high pollen or poor air quality. Ensure you're consistent with your daily medication.`;
-    }
-    return `Your risk score is low at ${riskScore}, which is great news! It seems your current plan is working well. Continue to monitor your symptoms and stick to your routine.`;
-  }
-
-  if (lowerInput.includes("eat") || lowerInput.includes("diet") || lowerInput.includes("food")) {
-    return "A healthy diet can certainly help manage your condition. I suggest focusing on anti-inflammatory foods like leafy greens, berries, and fatty fish. It's also wise to stay hydrated and limit processed foods and excessive salt, which can sometimes contribute to breathing difficulties.";
-  }
-
-  return "That's a great question. Based on your current health data, I would recommend that you continue to monitor your symptoms closely. If you notice any significant changes, it's always best to consult with your healthcare provider. Remember to stay hydrated and get plenty of rest.";
-};
-
 
 export function DoctorChatbot({
   riskScore,
@@ -70,12 +33,16 @@ export function DoctorChatbot({
 
   const scrollToBottom = () => {
     if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTo({
-        top: scrollAreaRef.current.scrollHeight,
-        behavior: 'smooth',
-      });
+      // Use setTimeout to ensure the DOM has updated before scrolling
+      setTimeout(() => {
+        scrollAreaRef.current?.scrollTo({
+          top: scrollAreaRef.current.scrollHeight,
+          behavior: 'smooth',
+        });
+      }, 100);
     }
   };
+  
 
   useEffect(() => {
     // Add initial greeting from the bot
@@ -97,27 +64,39 @@ export function DoctorChatbot({
     if (!input.trim() || isLoading) return;
 
     const userMessage: ChatMessage = { role: "user", content: input };
-    setMessages((prev) => [...prev, userMessage]);
-    const currentInput = input;
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
     setInput("");
     setIsLoading(true);
     
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
     try {
-      const response = { reply: generateMockChatResponse(currentInput, { riskScore, acousticData, environmentalData, sleepReport }) };
+      const healthData: HealthData = {
+        riskScore: riskScore,
+        coughFrequency: acousticData?.coughFrequency,
+        wheezingDetected: acousticData?.wheezing,
+        breathingRate: acousticData?.breathingRate,
+        aqi: environmentalData?.aqi,
+        pollenCount: environmentalData?.pollen,
+        sleepQualityScore: sleepReport?.sleepScore,
+      };
+
+      const response = await chatWithDoctor({
+        healthData: healthData,
+        messages: newMessages,
+      });
+      
       const botMessage: ChatMessage = { role: "model", content: response.reply };
       setMessages((prev) => [...prev, botMessage]);
+
     } catch (error) {
-      console.error("Error chatting with mock doctor AI:", error);
+      console.error("Error chatting with doctor AI:", error);
       toast({
         title: "Error",
         description: "Could not get a response from the AI assistant. Please try again.",
         variant: "destructive",
       });
        const errorMessage: ChatMessage = { role: "model", content: "Sorry, I'm having trouble connecting right now. Please try again in a moment." };
-       setMessages(prev => [...prev.slice(0, -1), errorMessage]);
+       setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
     }
