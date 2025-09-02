@@ -13,12 +13,15 @@ import { SleepReportCard } from '@/components/dashboard/sleep-report-card';
 import { SymptomHistoryCard } from '@/components/dashboard/symptom-history-card';
 import { useToast } from '@/hooks/use-toast';
 import { calculateRiskScore } from '@/ai/flows/calculate-risk-score';
+import type { EnvironmentalData } from '@/lib/types';
 
 export default function DashboardPage() {
   const [symptomLogs, setSymptomLogs] = useState<SymptomLog[]>([]);
   const [currentRiskScore, setCurrentRiskScore] = useState(0);
   const [riskScoreExplanation, setRiskScoreExplanation] = useState<string | null>('Please log symptoms to see your Exacerbation Risk Score');
   const [isCalculatingScore, setIsCalculatingScore] = useState(false);
+  const [environmentalData, setEnvironmentalData] = useState<EnvironmentalData | null>(null);
+  const [isFetchingAqi, setIsFetchingAqi] = useState(true);
   const { toast } = useToast();
 
   const addSymptomLog = async (log: Omit<SymptomLog, 'dateTime'>) => {
@@ -72,13 +75,17 @@ export default function DashboardPage() {
             <AiCards />
           </div>
           <div className="col-span-1 md:col-span-2 lg:col-span-4">
-            <DataCharts />
+            <DataCharts 
+              riskScore={currentRiskScore}
+              aqi={environmentalData?.aqi}
+              isLoading={isFetchingAqi}
+            />
           </div>
           <div className="col-span-1 md:col-span-1 lg:col-span-2">
             <AcousticMonitorCard />
           </div>
           <div className="col-span-1 md:col-span-1 lg:col-span-2">
-            <EnvironmentCard />
+            <EnvironmentCard onDataFetched={setEnvironmentalData} onLoadingChange={setIsFetchingAqi} />
           </div>
           <div className="col-span-1 md:col-span-2 lg:col-span-4">
             <SleepReportCard />

@@ -11,27 +11,16 @@ import {
   ChartLegendContent,
 } from "@/components/ui/chart"
 import { ComposedChart, Line, XAxis, YAxis, CartesianGrid, Bar, ResponsiveContainer } from "recharts"
-import { riskScores, acousticData, environmentalData } from "@/lib/mock-data"
+import { riskScores as mockRiskScores, acousticData, environmentalData } from "@/lib/mock-data"
 import type { DailyData } from "@/lib/types"
+import { Skeleton } from "@/components/ui/skeleton"
 
-const historyData: DailyData[] = riskScores.history.map((rs, index) => ({
+const historyData: DailyData[] = mockRiskScores.history.map((rs, index) => ({
   date: rs.date,
   riskScore: rs.score,
   coughFrequency: acousticData.history[index % acousticData.history.length]?.coughFrequency,
   aqi: environmentalData.history[index]?.aqi,
 }));
-
-// Add today's data to the chart
-const today = new Date().toISOString().split('T')[0];
-const todayData: DailyData = {
-    date: today,
-    riskScore: riskScores.today,
-    coughFrequency: acousticData.today.coughFrequency,
-    aqi: environmentalData.today.aqi,
-};
-
-const chartData = [...historyData, todayData];
-
 
 const chartConfig = {
   riskScore: {
@@ -48,7 +37,25 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-export function DataCharts() {
+type DataChartsProps = {
+  riskScore: number;
+  aqi?: number;
+  isLoading: boolean;
+};
+
+export function DataCharts({ riskScore, aqi, isLoading }: DataChartsProps) {
+  const today = new Date().toISOString().split('T')[0];
+
+  const chartData = [
+    ...historyData,
+    {
+      date: today,
+      riskScore: riskScore, // Use the live risk score
+      coughFrequency: acousticData.today.coughFrequency,
+      aqi: aqi, // Use the live aqi
+    }
+  ];
+
   return (
     <Card>
       <CardHeader>
@@ -56,42 +63,48 @@ export function DataCharts() {
         <CardDescription>View your risk score, symptoms, and environmental factors including today.</CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="h-[250px] w-full">
-          <ResponsiveContainer>
-            <ComposedChart
-              data={chartData}
-              margin={{
-                top: 5,
-                right: 20,
-                left: -10,
-                bottom: 5,
-              }}
-            >
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis
-                dataKey="date"
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-                tickFormatter={(value) => {
-                    const date = new Date(value);
-                    if (value === today) return "Today";
-                    return date.toLocaleString('en-US', { day: 'numeric', month: 'short' })
+        {isLoading ? (
+          <Skeleton className="h-[250px] w-full" />
+        ) : (
+          <ChartContainer config={chartConfig} className="h-[250px] w-full">
+            <ResponsiveContainer>
+              <ComposedChart
+                data={chartData}
+                margin={{
+                  top: 5,
+                  right: 20,
+                  left: -10,
+                  bottom: 5,
                 }}
-              />
-              <YAxis yAxisId="left" domain={[0, 180]} hide />
-              <YAxis yAxisId="right" orientation="right" domain={[0, 40]} hide />
-              <ChartTooltip
-                cursor={true}
-                content={<ChartTooltipContent indicator="line" />}
-              />
-              <ChartLegend content={<ChartLegendContent />} />
-              <Bar yAxisId="left" dataKey="aqi" fill="var(--color-aqi)" radius={4} barSize={20} opacity={0.3} />
-              <Line yAxisId="left" type="monotone" dataKey="riskScore" stroke="var(--color-riskScore)" strokeWidth={2} dot={{r: 4}} activeDot={{r: 6}} />
-              <Line yAxisId="right" type="monotone" dataKey="coughFrequency" stroke="var(--color-coughFrequency)" strokeWidth={2} dot={false} />
-            </ComposedChart>
-          </ResponsiveContainer>
-        </ChartContainer>
+              >
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis
+                  dataKey="date"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                  tickFormatter={(value) => {
+                      const date = new Date(value);
+                      // Adding a check to avoid invalid date formatting
+                      if (isNaN(date.getTime())) return "";
+                      if (value === today) return "Today";
+                      return date.toLocaleString('en-US', { day: 'numeric', month: 'short' })
+                  }}
+                />
+                <YAxis yAxisId="left" domain={[0, 180]} hide />
+                <YAxis yAxisId="right" orientation="right" domain={[0, 40]} hide />
+                <ChartTooltip
+                  cursor={true}
+                  content={<ChartTooltipContent indicator="line" />}
+                />
+                <ChartLegend content={<ChartLegendContent />} />
+                <Bar yAxisId="left" dataKey="aqi" fill="var(--color-aqi)" radius={4} barSize={20} opacity={0.3} />
+                <Line yAxisId="left" type="monotone" dataKey="riskScore" stroke="var(--color-riskScore)" strokeWidth={2} dot={{r: 4}} activeDot={{r: 6}} />
+                <Line yAxisId="right" type="monotone" dataKey="coughFrequency" stroke="var(--color-coughFrequency)" strokeWidth={2} dot={false} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </ChartContainer>
+        )}
       </CardContent>
     </Card>
   )

@@ -1,20 +1,25 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Wind, Leaf, Loader2, AlertTriangle } from "lucide-react";
 import { getEnvironmentalData } from "@/ai/flows/get-environmental-data";
+import type { EnvironmentalData } from "@/lib/types";
 
-type EnvironmentalData = {
-  aqi: number;
-  pollen: 'Low' | 'Moderate' | 'High';
-  location: string;
+type EnvironmentCardProps = {
+  onDataFetched: (data: EnvironmentalData | null) => void;
+  onLoadingChange: (isLoading: boolean) => void;
 };
 
-export function EnvironmentCard() {
+export function EnvironmentCard({ onDataFetched, onLoadingChange }: EnvironmentCardProps) {
   const [data, setData] = useState<EnvironmentalData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    onLoadingChange(isLoading);
+  }, [isLoading, onLoadingChange]);
 
   useEffect(() => {
     const fetchRealTimeData = async (position: GeolocationPosition) => {
@@ -23,14 +28,17 @@ export function EnvironmentCard() {
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
         });
-        setData({
+        const fetchedData = {
           aqi: result.aqi,
           pollen: result.pollen,
           location: result.locationName,
-        });
+        };
+        setData(fetchedData);
+        onDataFetched(fetchedData);
       } catch (e) {
         console.error("Error fetching environmental data:", e);
         setError("Could not retrieve environmental data at this time.");
+        onDataFetched(null);
       } finally {
         setIsLoading(false);
       }
@@ -51,6 +59,7 @@ export function EnvironmentCard() {
           setError("An unknown error occurred while fetching location.");
           break;
       }
+      onDataFetched(null);
       setIsLoading(false);
     };
 
@@ -58,9 +67,10 @@ export function EnvironmentCard() {
       navigator.geolocation.getCurrentPosition(fetchRealTimeData, handleError);
     } else {
       setError("Geolocation is not supported by this browser.");
+      onDataFetched(null);
       setIsLoading(false);
     }
-  }, []);
+  }, [onDataFetched]);
 
   const getAqiColor = (value: number) => {
     if (value <= 50) return "text-accent"; // Good
