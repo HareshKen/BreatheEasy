@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Wind, Leaf, Loader2, AlertTriangle } from "lucide-react";
+import { getEnvironmentalData } from "@/ai/flows/get-environmental-data";
 
 type EnvironmentalData = {
   aqi: number;
@@ -16,20 +17,23 @@ export function EnvironmentCard() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchRealTimeData = (position: GeolocationPosition) => {
-      // In a real application, you would use the coordinates to call a weather/AQI API.
-      // For this demo, we will simulate an API call with mock data.
-      console.log("Fetching data for:", position.coords.latitude, position.coords.longitude);
-      
-      // Simulating API call
-      setTimeout(() => {
-        setData({
-          aqi: Math.floor(Math.random() * 200) + 1, // Random AQI from 1 to 200
-          pollen: ['Low', 'Moderate', 'High'][Math.floor(Math.random() * 3)] as 'Low' | 'Moderate' | 'High',
-          location: "Your Current Location"
+    const fetchRealTimeData = async (position: GeolocationPosition) => {
+      try {
+        const result = await getEnvironmentalData({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
         });
+        setData({
+          aqi: result.aqi,
+          pollen: result.pollen,
+          location: result.locationName,
+        });
+      } catch (e) {
+        console.error("Error fetching environmental data:", e);
+        setError("Could not retrieve environmental data at this time.");
+      } finally {
         setIsLoading(false);
-      }, 1500);
+      }
     };
 
     const handleError = (error: GeolocationPositionError) => {
