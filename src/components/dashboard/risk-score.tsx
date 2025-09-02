@@ -1,8 +1,13 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { riskScores } from "@/lib/mock-data";
-import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
+
+type RiskScoreProps = {
+  score: number;
+  explanation: string | null;
+  isLoading: boolean;
+};
 
 const getScoreColor = (score: number) => {
   if (score <= 33) return "hsl(var(--accent))";
@@ -17,14 +22,7 @@ const getScoreLabel = (score: number) => {
 };
 
 
-export function RiskScore() {
-  const [score, setScore] = useState(0);
-
-  useEffect(() => {
-    const animation = setTimeout(() => setScore(riskScores.today), 300);
-    return () => clearTimeout(animation);
-  }, []);
-
+export function RiskScore({ score, explanation, isLoading }: RiskScoreProps) {
   const scoreColor = getScoreColor(score);
   const scoreLabel = getScoreLabel(score);
   const circumference = 2 * Math.PI * 60; // 2 * pi * radius
@@ -62,15 +60,21 @@ export function RiskScore() {
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-4xl font-bold" style={{ color: scoreColor }}>
-              {Math.round(score)}
-            </span>
-            <span className="text-sm font-medium text-muted-foreground">/ 100</span>
+             {isLoading ? (
+              <Loader2 className="h-8 w-8 animate-spin" style={{ color: scoreColor }} />
+            ) : (
+              <>
+                <span className="text-4xl font-bold" style={{ color: scoreColor }}>
+                  {Math.round(score)}
+                </span>
+                <span className="text-sm font-medium text-muted-foreground">/ 100</span>
+              </>
+            )}
           </div>
         </div>
         <div className="text-center">
             <p className="text-lg font-semibold" style={{ color: scoreColor }}>{scoreLabel}</p>
-            <p className="text-sm text-muted-foreground">Based on recent data</p>
+            <p className="text-sm text-muted-foreground text-center px-4">{explanation}</p>
         </div>
       </CardContent>
     </Card>

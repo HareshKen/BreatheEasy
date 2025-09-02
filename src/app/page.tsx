@@ -11,12 +11,49 @@ import { AcousticMonitorCard } from '@/components/dashboard/acoustic-monitor-car
 import { EnvironmentCard } from '@/components/dashboard/environment-card';
 import { SleepReportCard } from '@/components/dashboard/sleep-report-card';
 import { SymptomHistoryCard } from '@/components/dashboard/symptom-history-card';
+import { useToast } from '@/hooks/use-toast';
+import { calculateRiskScore } from '@/ai/flows/calculate-risk-score';
+import { acousticData, environmentalData, riskScores } from '@/lib/mock-data';
 
 export default function DashboardPage() {
   const [symptomLogs, setSymptomLogs] = useState<SymptomLog[]>([]);
+  const [currentRiskScore, setCurrentRiskScore] = useState(riskScores.today);
+  const [riskScoreExplanation, setRiskScoreExplanation] = useState<string | null>('Based on recent data');
+  const [isCalculatingScore, setIsCalculatingScore] = useState(false);
+  const { toast } = useToast();
 
-  const addSymptomLog = (log: Omit<SymptomLog, 'dateTime'>) => {
-    setSymptomLogs(prevLogs => [...prevLogs, { ...log, dateTime: new Date() }]);
+  const addSymptomLog = async (log: Omit<SymptomLog, 'dateTime'>) => {
+    const newLogs = [...symptomLogs, { ...log, dateTime: new Date() }];
+    setSymptomLogs(newLogs);
+
+    if (newLogs.length >= 3) {
+      setIsCalculatingScore(true);
+      setRiskScoreExplanation('Recalculating score based on new symptom data...');
+      toast({
+        title: "Analyzing Symptoms",
+        description: "You've logged 3 symptoms. We're recalculating your risk score.",
+      });
+
+      try {
+        const result = await calculateRiskScore({
+          symptomLogs: JSON.stringify(newLogs.slice(-3)), // Send last 3 logs
+          acousticData: JSON.stringify(acousticData.today),
+          environmentalData: JSON.stringify(environmentalData.today),
+        });
+        setCurrentRiskScore(result.riskScore);
+        setRiskScoreExplanation(result.explanation);
+      } catch (error) {
+        console.error("Error calculating risk score:", error);
+        toast({
+          title: "Error",
+          description: "Could not recalculate risk score at this time.",
+          variant: "destructive",
+        });
+        setRiskScoreExplanation('Could not update score.');
+      } finally {
+        setIsCalculatingScore(false);
+      }
+    }
   };
 
   return (
@@ -25,7 +62,11 @@ export default function DashboardPage() {
       <main className="flex-1 p-4 sm:p-6 md:p-8">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
           <div className="lg:col-span-1 md:col-span-2">
-            <RiskScore />
+            <RiskScore 
+              score={currentRiskScore} 
+              explanation={riskScoreExplanation} 
+              isLoading={isCalculatingScore} 
+            />
           </div>
           <div className="lg:col-span-3 md:col-span-2">
             <AiCards />
