@@ -13,7 +13,6 @@ import { SleepReportCard } from '@/components/dashboard/sleep-report-card';
 import { SymptomHistoryCard } from '@/components/dashboard/symptom-history-card';
 import { useToast } from '@/hooks/use-toast';
 import { calculateRiskScore } from '@/ai/flows/calculate-risk-score';
-import { acousticData, environmentalData } from '@/lib/mock-data';
 
 export default function DashboardPage() {
   const [symptomLogs, setSymptomLogs] = useState<SymptomLog[]>([]);
@@ -37,8 +36,6 @@ export default function DashboardPage() {
       try {
         const result = await calculateRiskScore({
           symptomLogs: JSON.stringify(newLogs),
-          acousticData: JSON.stringify(acousticData.today),
-          environmentalData: JSON.stringify(environmentalData.today),
         });
         setCurrentRiskScore(result.riskScore);
         setRiskScoreExplanation(result.explanation);

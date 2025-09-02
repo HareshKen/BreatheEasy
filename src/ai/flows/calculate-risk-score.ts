@@ -12,8 +12,6 @@ import {z} from 'genkit';
 
 const CalculateRiskScoreInputSchema = z.object({
   symptomLogs: z.string().describe("A JSON string representing the user's recent symptom logs (phlegm color, inhaler usage)."),
-  acousticData: z.string().describe("A JSON string of recent acoustic data (cough frequency, wheezing)."),
-  environmentalData: z.string().describe("A JSON string of recent environmental data (AQI, pollen)."),
 });
 export type CalculateRiskScoreInput = z.infer<typeof CalculateRiskScoreInputSchema>;
 
@@ -33,18 +31,28 @@ const prompt = ai.definePrompt({
   name: 'calculateRiskScorePrompt',
   input: {schema: CalculateRiskScoreInputSchema},
   output: {schema: CalculateRiskScoreOutputSchema},
-  prompt: `You are a health data analyst AI. Your task is to calculate an exacerbation risk score for a user with a chronic respiratory condition based on the data provided.
+  prompt: `You are a health data analyst AI. Your task is to calculate an exacerbation risk score for a user with a chronic respiratory condition based on their symptom logs.
 
   Analyze the following data:
   - Recent Symptom Logs: {{{symptomLogs}}}
-  - Recent Acoustic Data: {{{acousticData}}}
-  - Recent Environmental Data: {{{environmentalData}}}
 
-  Based on this data, calculate a risk score from 0 (lowest risk) to 100 (highest risk).
-  - Higher risk should be associated with: green/yellow phlegm, increased inhaler usage, high cough frequency, presence of wheezing, and poor environmental conditions (high AQI/pollen).
-  - Lower risk should be associated with: clear/white phlegm, low inhaler usage, low cough frequency, no wheezing, and good environmental conditions.
+  Calculate a risk score from 0 (lowest risk) to 100 (highest risk) based on these rules:
 
-  Also, provide a brief, one or two-sentence explanation summarizing the main reasons for the calculated score. For example, "The score increased due to recent reports of yellow phlegm and a rise in local air quality index."
+  Phlegm Color Severity:
+  - 'Clear': fine (score contribution: 0-10)
+  - 'White': ok (score contribution: 10-25)
+  - 'Yellow': moderate (score contribution: 25-50)
+  - 'Green', 'Other': danger (score contribution: 50-70)
+
+  Inhaler Usage Severity:
+  - 0: fine (score contribution: 0-5)
+  - 1: ok (score contribution: 5-15)
+  - 2: moderate (score contribution: 15-30)
+  - >2: danger (score contribution: 30-50)
+
+  The final risk score should be a combination of the severity of both phlegm color and inhaler usage from the most recent logs. A user with 'Green' phlegm and high inhaler usage should have a very high score. A user with 'Clear' phlegm and no inhaler usage should have a very low score.
+
+  Provide a brief, one or two-sentence explanation summarizing the main reasons for the calculated score based on the reported symptoms. For example, "The score is elevated due to recent reports of yellow phlegm and increased inhaler usage."
 
   Return the new score and the explanation.
   `,
