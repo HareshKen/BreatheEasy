@@ -20,7 +20,7 @@ const AnalyzeCoughInputSchema = z.object({
 export type AnalyzeCoughInput = z.infer<typeof AnalyzeCoughInputSchema>;
 
 const AnalyzeCoughOutputSchema = z.object({
-  analysis: z.string().describe('A brief analysis of the cough, indicating if it sounds wet or dry.'),
+  analysis: z.string().describe('A detailed analysis of the cough, describing its characteristics (e.g., productive, non-productive, harsh, wheezy) without providing a medical diagnosis.'),
 });
 export type AnalyzeCoughOutput = z.infer<typeof AnalyzeCoughOutputSchema>;
 
@@ -34,10 +34,14 @@ const prompt = ai.definePrompt({
   name: 'analyzeCoughPrompt',
   input: {schema: AnalyzeCoughInputSchema},
   output: {schema: AnalyzeCoughOutputSchema},
-  prompt: `You are an AI assistant that analyzes audio recordings of coughs.
+  prompt: `You are an AI assistant with expertise in analyzing respiratory sounds. Your task is to provide a detailed, descriptive analysis of a cough from an audio recording.
 
-  Analyze the following audio data and determine if the cough sounds wet or dry. Provide a very brief, one-sentence analysis.
-  Do not provide any medical advice or diagnosis.
+  Analyze the following audio data and describe its acoustic characteristics. Consider aspects like:
+  - Is it a productive (wet, mucousy) or non-productive (dry, hacking) cough?
+  - What is the tone? (e.g., harsh, brassy, wheezy, barking)
+  - Note the intensity and frequency if possible from the short clip.
+
+  IMPORTANT: Do not provide any medical advice, diagnosis, or suggest potential conditions. Your analysis must be strictly limited to the sounds you hear in the audio.
 
   Audio: {{media url=audioDataUri}}
   `,
