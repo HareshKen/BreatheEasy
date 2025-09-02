@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Wind, Leaf, Loader2, AlertTriangle } from "lucide-react";
-import { environmentalData as mockEnvironmentalData } from "@/lib/mock-data";
+import { getEnvironmentalData } from "@/ai/flows/get-environmental-data";
 import type { EnvironmentalData } from "@/lib/types";
 
 type EnvironmentCardProps = {
@@ -22,25 +22,30 @@ export function EnvironmentCard({ onDataFetched, onLoadingChange }: EnvironmentC
   }, [isLoading, onLoadingChange]);
 
   useEffect(() => {
-    const fetchMockData = () => {
+    const fetchEnvData = async () => {
       setIsLoading(true);
-      // Simulate network delay
-      setTimeout(() => {
-        try {
-          const mockData = mockEnvironmentalData.today;
-          setData(mockData);
-          onDataFetched(mockData);
-        } catch (e) {
-          console.error("Error loading mock environmental data:", e);
-          setError("Could not retrieve environmental data at this time.");
-          onDataFetched(null);
-        } finally {
-          setIsLoading(false);
+      setError(null);
+      try {
+        // Simulate getting user's location. In a real app, you'd use navigator.geolocation
+        const mockLocation = { latitude: 37.4419, longitude: -122.1430 };
+        const result = await getEnvironmentalData(mockLocation);
+        const fetchedData = {
+          location: result.locationName,
+          aqi: result.aqi,
+          pollen: result.pollen,
         }
-      }, 500);
+        setData(fetchedData);
+        onDataFetched(fetchedData);
+      } catch (e) {
+        console.error("Error fetching environmental data:", e);
+        setError("Could not retrieve environmental data at this time. Please try again.");
+        onDataFetched(null);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    fetchMockData();
+    fetchEnvData();
   }, [onDataFetched]);
 
   const getAqiColor = (value: number) => {

@@ -9,6 +9,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { getCurrentWeather } from '../tools/weather';
 
 const GetEnvironmentalDataInputSchema = z.object({
   latitude: z.number().describe('The latitude of the location.'),
@@ -33,7 +34,8 @@ const prompt = ai.definePrompt({
   name: 'getEnvironmentalDataPrompt',
   input: {schema: GetEnvironmentalDataInputSchema},
   output: {schema: GetEnvironmentalDataOutputSchema},
-  prompt: `You are a weather and air quality API. Based on the provided latitude ({{{latitude}}}) and longitude ({{{longitude}}}), return a realistic Air Quality Index (AQI) value, a pollen count level ('Low', 'Moderate', or 'High'), and a plausible city name for that location.
+  tools: [getCurrentWeather],
+  prompt: `You are a weather and air quality API. Based on the provided latitude ({{{latitude}}}) and longitude ({{{longitude}}}), use the available tools to return a realistic Air Quality Index (AQI) value, a pollen count level ('Low', 'Moderate', or 'High'), and a plausible city name for that location.
 
   Do not mention that you are an AI or that this is simulated. Act as a real data provider.
   `,

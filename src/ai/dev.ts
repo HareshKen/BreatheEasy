@@ -7,3 +7,4 @@ import '@/ai/flows/analyze-cough.ts';
 import '@/ai/flows/analyze-sleep-data.ts';
 import '@/ai/flows/calculate-risk-score.ts';
 import '@/ai/flows/get-environmental-data.ts';
+import '@/ai/tools/weather.ts';
