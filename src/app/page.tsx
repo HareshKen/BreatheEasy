@@ -150,10 +150,10 @@ export default function DashboardPage() {
             <EnvironmentCard onDataFetched={setEnvironmentalData} onLoadingChange={setIsFetchingAqi} />
           </div>
           <div className="col-span-1 md:col-span-2 lg:col-span-4">
-            <SleepMonitorCard />
+            <SleepReportCard acousticData={acousticData} onReportGenerated={setSleepReport} />
           </div>
           <div className="col-span-1 md:col-span-2 lg:col-span-4">
-            <SleepReportCard acousticData={acousticData} onReportGenerated={setSleepReport} />
+            <SleepMonitorCard />
           </div>
            <div className="col-span-1 md:col-span-2 lg:col-span-4">
             <SymptomLoggerCard addSymptomLog={addSymptomLog} logs={symptomLogs} />
