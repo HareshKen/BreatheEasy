@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { chatWithDoctor } from "@/ai/flows/chat-with-doctor";
+// import { chatWithDoctor } from "@/ai/flows/chat-with-doctor"; // Commented out to prevent API calls
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,28 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Send, Sparkles, Bot, User, Loader2 } from "lucide-react";
 import type { AcousticData, EnvironmentalData, SleepReport, ChatMessage, HealthData } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
+
+const generateMockChatResponse = (
+  healthData: HealthData,
+  messages: ChatMessage[]
+): string => {
+  const lastUserMessage = messages[messages.length - 1]?.content.toLowerCase() || "";
+
+  if (lastUserMessage.includes("diet") || lastUserMessage.includes("eat") || lastUserMessage.includes("food")) {
+    return "A healthy diet is important for managing your condition. I recommend focusing on anti-inflammatory foods like leafy greens, berries, and fatty fish. Try to avoid processed foods, sugary drinks, and excessive red meat, as they can sometimes trigger inflammation. Would you like more specific suggestions?";
+  }
+  
+  if (healthData.riskScore && healthData.riskScore > 66) {
+    return `Your exacerbation risk score is quite high at ${healthData.riskScore}. It's important to be vigilant. Make sure you're taking your prescribed medications, avoid known triggers like smoke or high pollen, and have your rescue inhaler readily available. How are you feeling right now?`;
+  }
+
+  if (healthData.sleepQualityScore && healthData.sleepQualityScore < 40) {
+    return `I noticed your sleep quality score is low at ${healthData.sleepQualityScore}. Poor sleep can definitely impact your respiratory health. To improve it, you could try establishing a regular sleep schedule, creating a relaxing bedtime routine, and ensuring your bedroom is dark and quiet. Perhaps we can discuss some relaxation techniques?`;
+  }
+
+  return "That's a great question. Based on your current health data, I recommend continuing to monitor your symptoms closely. If you notice any significant changes, it's always best to consult with your healthcare provider. Remember to stay hydrated and get plenty of rest.";
+};
+
 
 type DoctorChatbotProps = {
   riskScore: number;
@@ -69,6 +91,9 @@ export function DoctorChatbot({
     setInput("");
     setIsLoading(true);
     
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
     try {
       const healthData: HealthData = {
         riskScore: riskScore,
@@ -80,16 +105,13 @@ export function DoctorChatbot({
         sleepQualityScore: sleepReport?.sleepScore,
       };
 
-      const response = await chatWithDoctor({
-        healthData: healthData,
-        messages: newMessages,
-      });
-      
-      const botMessage: ChatMessage = { role: "model", content: response.reply };
+      // MOCK IMPLEMENTATION
+      const response = generateMockChatResponse(healthData, newMessages);
+      const botMessage: ChatMessage = { role: "model", content: response };
       setMessages((prev) => [...prev, botMessage]);
 
     } catch (error) {
-      console.error("Error chatting with doctor AI:", error);
+      console.error("Error chatting with mock doctor AI:", error);
       toast({
         title: "Error",
         description: "Could not get a response from the AI assistant. Please try again.",
