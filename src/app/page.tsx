@@ -140,6 +140,7 @@ export default function DashboardPage() {
         addGoal={addGoal} 
         symptomLogs={symptomLogs} 
         sleepReport={sleepReport} 
+        riskScore={currentRiskScore}
       />
       <main className="flex-1 p-4 sm:p-6 md:p-8">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -153,7 +154,7 @@ export default function DashboardPage() {
             <SleepReportCard acousticData={acousticData} onReportGenerated={setSleepReport} />
           </div>
           <div className="col-span-1 md:col-span-2 lg:col-span-4">
-            <SleepMonitorCard />
+            <SleepMonitorCard riskScore={currentRiskScore} symptomLogs={symptomLogs} />
           </div>
            <div className="col-span-1 md:col-span-2 lg:col-span-4">
             <SymptomLoggerCard addSymptomLog={addSymptomLog} logs={symptomLogs} />

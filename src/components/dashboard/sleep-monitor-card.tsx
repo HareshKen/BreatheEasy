@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Moon, Square, Waves, HeartPulse, Ear, AlarmClock, BellOff, Loader2, History } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { sendEmergencyAlert } from "@/lib/sos";
+import type { SymptomLog } from "@/lib/types";
 
 type SleepSessionLog = {
   startTime: Date;
@@ -16,7 +18,12 @@ type SleepSessionLog = {
   wheezingDetected: boolean;
 };
 
-export function SleepMonitorCard() {
+type SleepMonitorCardProps = {
+    riskScore: number;
+    symptomLogs: SymptomLog[];
+}
+
+export function SleepMonitorCard({ riskScore, symptomLogs }: SleepMonitorCardProps) {
   const [isMonitoring, setIsMonitoring] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [liveData, setLiveData] = useState({
@@ -26,6 +33,7 @@ export function SleepMonitorCard() {
   });
   const [sessionLog, setSessionLog] = useState<SleepSessionLog[]>([]);
   const [showAlert, setShowAlert] = useState(false);
+  const [isAutoSosTriggered, setIsAutoSosTriggered] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -50,6 +58,31 @@ export function SleepMonitorCard() {
   }, []);
 
   useEffect(() => {
+    const handleAutomaticSOS = async () => {
+      if (isAutoSosTriggered) return;
+      setIsAutoSosTriggered(true);
+
+      toast({
+        variant: "destructive",
+        title: "AUTOMATIC SOS TRIGGERED",
+        description: "Critically high-risk event detected. Sending alert to emergency contacts and your doctor.",
+        duration: 10000,
+      });
+
+      try {
+        await sendEmergencyAlert({ riskScore, symptomLogs });
+        // You would also add a call here to notify the doctor
+        console.log("Automated doctor alert would be sent here.");
+      } catch (error) {
+        console.error("Failed to send automated SOS", error);
+        toast({
+            variant: "destructive",
+            title: "Automated SOS Failed",
+            description: (error as Error).message,
+        });
+      }
+    };
+
     if (isMonitoring) {
       intervalRef.current = setInterval(() => {
         setElapsedTime((prev) => prev + 1);
@@ -57,12 +90,13 @@ export function SleepMonitorCard() {
         // Simulate data fluctuations
         const coughChance = Math.random();
         let newCoughFrequency = liveData.coughFrequency;
-        if (coughChance < 0.15 + (elapsedTime / 300)) {
+        // Increase likelihood of high values for demonstration
+        if (coughChance < 0.25 + (elapsedTime / 180)) { 
           newCoughFrequency = liveData.coughFrequency + 1;
         }
 
-        const newBreathingRate = 18 + Math.floor(Math.random() * 5);
-        const newWheezing = liveData.wheezing || Math.random() < 0.4;
+        const newBreathingRate = 18 + Math.floor(Math.random() * 8); // Skew higher
+        const newWheezing = liveData.wheezing || Math.random() < 0.5; // Skew towards true
 
         setLiveData({
           coughFrequency: newCoughFrequency,
@@ -70,19 +104,24 @@ export function SleepMonitorCard() {
           wheezing: newWheezing,
         });
 
-        // Check for alarm conditions
-        if (newCoughFrequency > 40 && newBreathingRate > 20 && newWheezing) {
-          setShowAlert(true);
-          if (audioRef.current && audioRef.current.paused) {
-            audioRef.current.play().catch(e => console.error("Error playing audio:", e));
-          }
-          toast({
-            variant: "destructive",
-            title: "High-Risk Event Detected!",
-            description: "Significant coughing, wheezing, and high breathing rate detected.",
-          });
-        }
+        // Check for alarm and SOS conditions
+        const isCritical = newCoughFrequency > 40 && newBreathingRate > 22 && newWheezing;
 
+        if (isCritical) {
+          if (!showAlert) { // Only trigger alarm and toast once
+            setShowAlert(true);
+            if (audioRef.current && audioRef.current.paused) {
+              audioRef.current.play().catch(e => console.error("Error playing audio:", e));
+            }
+            toast({
+              variant: "destructive",
+              title: "High-Risk Event Detected!",
+              description: "Significant coughing, wheezing, and high breathing rate detected.",
+            });
+          }
+          // Trigger automated SOS
+          handleAutomaticSOS();
+        }
       }, 2000); // Update every 2 seconds
     } else {
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -94,7 +133,8 @@ export function SleepMonitorCard() {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [isMonitoring, liveData.coughFrequency, liveData.wheezing, elapsedTime, toast]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMonitoring, liveData, elapsedTime, toast, isAutoSosTriggered, riskScore, symptomLogs]);
   
   const handleStartMonitoring = async () => {
     try {
@@ -140,6 +180,7 @@ export function SleepMonitorCard() {
       setElapsedTime(0);
       setLiveData({ coughFrequency: 0, breathingRate: 14, wheezing: false });
       setShowAlert(false);
+      setIsAutoSosTriggered(false); // Reset SOS trigger for next session
 
        toast({
         title: "Sleep Mode Deactivated",
@@ -175,7 +216,7 @@ export function SleepMonitorCard() {
     <Card className="shadow-cyan-500/10 hover:shadow-cyan-500/20">
       <CardHeader>
         <CardTitle>Sleep Mode</CardTitle>
-        <CardDescription>Activate to monitor respiratory events while you sleep. An alarm will sound if high-risk events are detected.</CardDescription>
+        <CardDescription>Activate to monitor respiratory events while you sleep. An alarm and automated SOS will be triggered if high-risk events are detected.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
@@ -207,7 +248,7 @@ export function SleepMonitorCard() {
               </div>
               <div className="flex items-center justify-between">
                  <div className="flex items-center gap-3"><HeartPulse className="h-5 w-5 text-cyan-400" /><span>Breathing Rate</span></div>
-                <Badge variant={liveData.breathingRate > 20 ? "destructive" : "secondary"}>{liveData.breathingRate} <span className="text-xs font-normal ml-1">bpm</span></Badge>
+                <Badge variant={liveData.breathingRate > 22 ? "destructive" : "secondary"}>{liveData.breathingRate} <span className="text-xs font-normal ml-1">bpm</span></Badge>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3"><Ear className="h-5 w-5 text-cyan-400" /><span>Wheezing</span></div>
