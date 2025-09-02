@@ -28,19 +28,13 @@ export function AiCards({ riskScore, symptomLogs, acousticData, environmentalDat
   const handleGenerateInsights = async () => {
     setIsLoadingInsights(true);
     setInsights("");
-    try {
-      const result = await generateDataInsights({
-        acousticData: JSON.stringify(acousticData ?? mockAcousticData.history[mockAcousticData.history.length - 1]),
-        environmentalFactors: JSON.stringify(environmentalData ?? mockEnvironmentalData.history[mockEnvironmentalData.history.length - 1]),
-        riskScores: JSON.stringify({ today: riskScore, history: mockRiskScores.history }),
-      });
-      setInsights(result.insights);
-    } catch (error) {
-      console.error("Error generating insights:", error);
-      setInsights("Could not generate insights at this time. Please try again later.");
-    } finally {
+    // This is a mock implementation to avoid hitting API rate limits during development.
+    setTimeout(() => {
+      setInsights(
+        "Based on your recent data:\n\n- Your cough frequency has shown a slight increase over the past two days, coinciding with a rise in the local AQI.\n- Your risk score remains moderate, primarily influenced by environmental factors.\n- Maintaining your current medication schedule is recommended. Consider reducing outdoor exposure on high AQI days."
+      );
       setIsLoadingInsights(false);
-    }
+    }, 1000);
   };
 
   const handleGetRecommendations = async () => {
