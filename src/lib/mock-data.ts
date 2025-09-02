@@ -75,13 +75,13 @@ export const acousticData: { today: AcousticData, history: AcousticData[] } = {
 
 export const environmentalData: { today: EnvironmentalData; history: EnvironmentalData[] } = {
   today: {
-    location: 'Mambakkam',
+    location: 'Palo Alto',
     aqi: 155,
     pollen: 'High',
   },
   history: dates.map((date, i) => ({
     date,
-    location: 'Mambakkam',
+    location: 'Palo Alto',
     aqi: Math.floor(Math.random() * 50) + 110 - i * 5,
     pollen: i > 3 ? 'High' : 'Moderate',
   })),
