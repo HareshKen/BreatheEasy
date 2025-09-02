@@ -5,8 +5,35 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Bed, BarChart, Loader2, Sparkles, Moon } from "lucide-react";
-import { analyzeSleepData } from "@/ai/flows/analyze-sleep-data";
 import type { AcousticData, SleepReport } from "@/lib/types";
+
+// Mock implementation to avoid API rate limits during development.
+const generateMockSleepReport = (acousticData: AcousticData): SleepReport => {
+  let coughScore = 0;
+  if (acousticData.coughFrequency <= 5) coughScore = 40;
+  else if (acousticData.coughFrequency <= 10) coughScore = 30;
+  else if (acousticData.coughFrequency <= 20) coughScore = 20;
+  else if (acousticData.coughFrequency <= 30) coughScore = 10;
+
+  const wheezeScore = acousticData.wheezing ? 0 : 30;
+
+  let breathingScore = 0;
+  if (acousticData.breathingRate >= 12 && acousticData.breathingRate <= 16) breathingScore = 30;
+  else if ((acousticData.breathingRate >= 10 && acousticData.breathingRate < 12) || (acousticData.breathingRate > 16 && acousticData.breathingRate <= 18)) breathingScore = 20;
+  else if ((acousticData.breathingRate >= 8 && acousticData.breathingRate < 10) || (acousticData.breathingRate > 18 && acousticData.breathingRate <= 20)) breathingScore = 10;
+
+  const sleepScore = Math.min(100, coughScore + wheezeScore + breathingScore);
+  
+  let nightInsight = `Your sleep was fairly restful with a stable breathing rate of ${acousticData.breathingRate} bpm.`;
+  if (acousticData.wheezing) {
+    nightInsight = `Wheezing was detected last night, which significantly impacted your sleep quality. Your breathing rate was elevated at ${acousticData.breathingRate} bpm.`;
+  } else if (acousticData.coughFrequency > 10) {
+     nightInsight = `Your sleep was interrupted by frequent coughing (${acousticData.coughFrequency}/hr). Your breathing rate remained stable at ${acousticData.breathingRate} bpm.`;
+  }
+
+  return { sleepScore, nightInsight };
+};
+
 
 type SleepReportCardProps = {
   acousticData: AcousticData | null;
@@ -24,14 +51,15 @@ export function SleepReportCard({ acousticData, onReportGenerated }: SleepReport
     setReport(null);
     onReportGenerated(null);
 
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
     try {
-      const result = await analyzeSleepData({
-        nightlyAcousticData: JSON.stringify(acousticData),
-      });
+      const result = generateMockSleepReport(acousticData);
       setReport(result);
       onReportGenerated(result);
     } catch (error) {
-      console.error("Error generating sleep report:", error);
+      console.error("Error generating mock sleep report:", error);
       const errorReport = {
         sleepScore: 0,
         nightInsight: "Could not generate a report at this time. Please try again later.",
