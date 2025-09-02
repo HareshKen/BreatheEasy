@@ -12,7 +12,6 @@ import { EnvironmentCard } from '@/components/dashboard/environment-card';
 import { SleepReportCard } from '@/components/dashboard/sleep-report-card';
 import { useToast } from '@/hooks/use-toast';
 import { SymptomLoggerCard } from '@/components/dashboard/symptom-logger-card';
-import { DoctorChatbot } from '@/components/dashboard/doctor-chatbot';
 
 // Mock implementation to avoid API rate limits during development.
 const calculateMockRiskScore = (logs: SymptomLog[]): { riskScore: number; explanation: string } => {
@@ -131,14 +130,6 @@ export default function DashboardPage() {
           </div>
            <div className="col-span-1 md:col-span-2 lg:col-span-4">
             <SymptomLoggerCard addSymptomLog={addSymptomLog} logs={symptomLogs} />
-          </div>
-          <div className="col-span-1 md:col-span-2 lg:col-span-4">
-            <DoctorChatbot 
-              riskScore={currentRiskScore}
-              acousticData={acousticData}
-              environmentalData={environmentalData}
-              sleepReport={sleepReport}
-            />
           </div>
           <div className="lg:col-span-3 md:col-span-2">
             <AiCards 
