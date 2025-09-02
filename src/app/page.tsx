@@ -1,7 +1,8 @@
+
 'use client';
 
 import { useState } from 'react';
-import type { SymptomLog, AcousticData, SleepReport, EnvironmentalData, Goal } from '@/lib/types';
+import type { SymptomLog, AcousticData, SleepReport, EnvironmentalData, Goal, Trigger } from '@/lib/types';
 import { Header } from '@/components/dashboard/header';
 import { RiskScore } from '@/components/dashboard/risk-score';
 import { AiCards } from '@/components/dashboard/ai-cards';
@@ -54,7 +55,10 @@ const calculateMockRiskScore = (logs: SymptomLog[]): { riskScore: number; explan
     inhalerScore = Math.floor(Math.random() * 21) + 30; // 30-50
   }
   
-  score = Math.min(100, phlegmScore + inhalerScore);
+  // Trigger score contribution
+  const triggerScore = lastLog.triggers.length * 5;
+
+  score = Math.min(100, phlegmScore + inhalerScore + triggerScore);
 
   let explanation = "Your score is based on recent symptom logs. ";
   if (score > 60) {
@@ -63,6 +67,10 @@ const calculateMockRiskScore = (logs: SymptomLog[]): { riskScore: number; explan
     explanation += `It is moderate, influenced by ${lastLog.phlegmColor.toLowerCase()} phlegm and some inhaler usage.`;
   } else {
     explanation += "Your reported symptoms indicate a low risk level.";
+  }
+
+  if (lastLog.triggers.length > 0) {
+    explanation += ` Logged triggers like ${lastLog.triggers.join(', ')} may also be a factor.`
   }
 
   return {

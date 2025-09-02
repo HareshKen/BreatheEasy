@@ -2,10 +2,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Wind, Leaf, Loader2, AlertTriangle, Thermometer, Droplets } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Wind, Leaf, Loader2, AlertTriangle, Thermometer, Droplets, Gauge } from "lucide-react";
 import { fetchWeatherData } from "@/ai/tools/weather";
 import type { EnvironmentalData } from "@/lib/types";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 type EnvironmentCardProps = {
   onDataFetched: (data: EnvironmentalData | null) => void;
@@ -40,6 +46,12 @@ export function EnvironmentCard({ onDataFetched, onLoadingChange }: EnvironmentC
           const fetchedData: EnvironmentalData = {
             location: result.locationName,
             aqi: result.aqi,
+            pollutants: {
+                pm25: result.pm25,
+                ozone: result.ozone,
+                so2: result.so2,
+                no2: result.no2,
+            },
             pollen: result.pollen,
             temperature: result.temperature,
             humidity: result.humidity,
@@ -65,11 +77,17 @@ export function EnvironmentCard({ onDataFetched, onLoadingChange }: EnvironmentC
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onDataFetched]);
 
-  const getAqiColor = (value: number) => {
-    if (value <= 50) return "text-accent"; // Good
-    if (value <= 100) return "text-yellow-500"; // Moderate
-    if (value <= 150) return "text-orange-500"; // Unhealthy for Sensitive Groups
-    return "text-destructive"; // Unhealthy
+  const getPollutantInfo = (type: 'pm25' | 'ozone' | 'so2' | 'no2', value: number) => {
+    // Simplified scale for demonstration
+    if (type === 'pm25') {
+        if (value <= 12) return { label: 'Good', color: 'text-accent' };
+        if (value <= 35) return { label: 'Moderate', color: 'text-yellow-500' };
+        return { label: 'Unhealthy', color: 'text-destructive' };
+    }
+    // Add similar scales for other pollutants if needed
+    if (value < 50) return { label: 'Good', color: 'text-accent' };
+    if (value < 100) return { label: 'Moderate', color: 'text-yellow-500' };
+    return { label: 'High', color: 'text-destructive' };
   };
 
   return (
@@ -91,17 +109,8 @@ export function EnvironmentCard({ onDataFetched, onLoadingChange }: EnvironmentC
              <p className="text-sm text-destructive">{error}</p>
           </div>
         ) : data ? (
-          <>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="bg-secondary p-2 rounded-md">
-                  <Wind className="h-5 w-5 text-secondary-foreground" />
-                </div>
-                <span className="font-medium">Air Quality Index (AQI)</span>
-              </div>
-              <span className={`text-lg font-semibold ${getAqiColor(data.aqi)}`}>{data.aqi}</span>
-            </div>
-            <div className="flex items-center justify-between">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-center justify-between col-span-2">
               <div className="flex items-center gap-3">
                 <div className="bg-secondary p-2 rounded-md">
                   <Leaf className="h-5 w-5 text-secondary-foreground" />
@@ -128,9 +137,36 @@ export function EnvironmentCard({ onDataFetched, onLoadingChange }: EnvironmentC
               </div>
               <span className="text-lg font-semibold">{data.humidity}%</span>
             </div>
-          </>
+          </div>
         ) : null}
       </CardContent>
+      {data && (
+        <CardFooter className="flex flex-col items-start gap-4 border-t pt-4">
+            <h4 className="font-medium">Specific Pollutants</h4>
+            <div className="grid grid-cols-2 md:grid-cols-4 w-full gap-4 text-center">
+                 {(Object.keys(data.pollutants) as Array<keyof typeof data.pollutants>).map(key => {
+                     const value = data.pollutants[key];
+                     const { label, color } = getPollutantInfo(key, value);
+                     return (
+                       <TooltipProvider key={key}>
+                        <Tooltip>
+                         <TooltipTrigger asChild>
+                           <div className="flex flex-col items-center p-2 rounded-md bg-muted/50 gap-1 cursor-help">
+                              <span className="text-xs font-bold uppercase text-muted-foreground">{key}</span>
+                              <span className={`text-xl font-bold ${color}`}>{value}</span>
+                              <span className={`text-xs font-medium ${color}`}>{label}</span>
+                           </div>
+                         </TooltipTrigger>
+                          <TooltipContent>
+                             <p>{key.toUpperCase()} level is currently {label.toLowerCase()}.</p>
+                          </TooltipContent>
+                         </Tooltip>
+                       </TooltipProvider>
+                     );
+                 })}
+            </div>
+        </CardFooter>
+      )}
     </Card>
   );
 }

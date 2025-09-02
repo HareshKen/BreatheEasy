@@ -21,9 +21,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import type { SymptomLog } from "@/lib/types";
+import type { SymptomLog, Trigger } from "@/lib/types";
+import { validTriggers } from "@/lib/types";
+import { Badge } from "../ui/badge";
 
 type SymptomLoggerProps = {
   addSymptomLog: (log: Omit<SymptomLog, 'dateTime'>) => void;
@@ -33,7 +35,16 @@ export function SymptomLogger({ addSymptomLog }: SymptomLoggerProps) {
   const [open, setOpen] = useState(false);
   const [phlegmColor, setPhlegmColor] = useState("");
   const [inhalerUsage, setInhalerUsage] = useState("0");
+  const [triggers, setTriggers] = useState<Trigger[]>([]);
   const { toast } = useToast();
+
+  const handleTriggerToggle = (trigger: Trigger) => {
+    setTriggers(prev => 
+      prev.includes(trigger) 
+        ? prev.filter(t => t !== trigger)
+        : [...prev, trigger]
+    );
+  };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -49,6 +60,7 @@ export function SymptomLogger({ addSymptomLog }: SymptomLoggerProps) {
     addSymptomLog({
         phlegmColor: phlegmColor as SymptomLog['phlegmColor'],
         inhalerUsage: parseInt(inhalerUsage, 10),
+        triggers: triggers,
     });
 
     toast({
@@ -59,6 +71,7 @@ export function SymptomLogger({ addSymptomLog }: SymptomLoggerProps) {
     // Reset form and close dialog
     setPhlegmColor("");
     setInhalerUsage("0");
+    setTriggers([]);
     setOpen(false);
   };
 
@@ -75,7 +88,7 @@ export function SymptomLogger({ addSymptomLog }: SymptomLoggerProps) {
           <DialogHeader>
             <DialogTitle>Log Daily Symptoms</DialogTitle>
             <DialogDescription>
-              Record your symptoms and inhaler usage for today.
+              Record your symptoms, triggers, and inhaler usage for today.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -108,6 +121,25 @@ export function SymptomLogger({ addSymptomLog }: SymptomLoggerProps) {
                 className="col-span-3"
                 min="0"
               />
+            </div>
+             <div className="grid grid-cols-4 items-start gap-4">
+              <Label className="text-right pt-2">
+                Triggers
+              </Label>
+              <div className="col-span-3 flex flex-wrap gap-2">
+                {validTriggers.map(trigger => (
+                   <Button 
+                     key={trigger}
+                     type="button"
+                     variant={triggers.includes(trigger) ? "default" : "outline"}
+                     size="sm"
+                     onClick={() => handleTriggerToggle(trigger)}
+                     className="rounded-full"
+                   >
+                     {trigger}
+                   </Button>
+                ))}
+              </div>
             </div>
           </div>
           <DialogFooter>

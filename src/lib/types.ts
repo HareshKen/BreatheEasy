@@ -16,7 +16,13 @@ export interface AcousticData {
 export interface EnvironmentalData {
   date?: string;
   location: string;
-  aqi: number;
+  aqi: number; // Keep AQI for historical chart, but add pollutants
+  pollutants: {
+    pm25: number;
+    ozone: number;
+    so2: number;
+    no2: number;
+  };
   pollen: 'Low' | 'Moderate' | 'High';
   temperature: number;
   humidity: number;
@@ -29,10 +35,14 @@ export interface DailyData {
   aqi?: number;
 }
 
+export const validTriggers = ['Dust', 'Exercise', 'Pets', 'Stress', 'Other'] as const;
+export type Trigger = (typeof validTriggers)[number];
+
 export interface SymptomLog {
     dateTime: Date;
     phlegmColor: 'Clear' | 'White' | 'Yellow' | 'Green' | 'Other';
     inhalerUsage: number;
+    triggers: Trigger[];
 }
 
 export interface AnalyzeCoughOutput {

@@ -1,3 +1,4 @@
+
 import type { RiskScoreHistory, AcousticData, EnvironmentalData } from "./types";
 
 const today = new Date();
@@ -73,20 +74,34 @@ export const acousticData: { today: AcousticData, history: AcousticData[] } = {
   history: acousticHistory50,
 };
 
+const generateEnvironmentalData = (date: string, index: number): EnvironmentalData => ({
+    date,
+    location: 'Palo Alto',
+    aqi: Math.floor(Math.random() * 50) + 110 - index * 5,
+    pollutants: {
+        pm25: Math.floor(Math.random() * 20) + 20 - index * 2,
+        ozone: Math.floor(Math.random() * 30) + 30 - index * 2,
+        so2: Math.floor(Math.random() * 5) + 5 - Math.floor(index / 2),
+        no2: Math.floor(Math.random() * 10) + 10 - Math.floor(index / 2),
+    },
+    pollen: index > 3 ? 'High' : 'Moderate',
+    temperature: 28 - index,
+    humidity: 75 + index * 2,
+});
+
 export const environmentalData: { today: Omit<EnvironmentalData, 'date'>; history: EnvironmentalData[] } = {
   today: {
     location: 'Palo Alto',
     aqi: 155,
+    pollutants: {
+        pm25: 35,
+        ozone: 55,
+        so2: 8,
+        no2: 15,
+    },
     pollen: 'High',
     temperature: 28,
     humidity: 75,
   },
-  history: dates.map((date, i) => ({
-    date,
-    location: 'Palo Alto',
-    aqi: Math.floor(Math.random() * 50) + 110 - i * 5,
-    pollen: i > 3 ? 'High' : 'Moderate',
-    temperature: 28 - i,
-    humidity: 75 + i * 2,
-  })),
+  history: dates.map((date, i) => generateEnvironmentalData(date, i)),
 };

@@ -12,6 +12,7 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { SymptomLogger } from "./symptom-logger";
+import { Badge } from "../ui/badge";
 
 type SymptomLoggerCardProps = {
   addSymptomLog: (log: Omit<SymptomLog, 'dateTime'>) => void;
@@ -39,6 +40,7 @@ export function SymptomLoggerCard({ addSymptomLog, logs }: SymptomLoggerCardProp
                   <TableRow>
                     <TableHead>Date & Time</TableHead>
                     <TableHead>Phlegm Color</TableHead>
+                    <TableHead>Triggers</TableHead>
                     <TableHead className="text-right">Inhaler Usage</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -47,6 +49,15 @@ export function SymptomLoggerCard({ addSymptomLog, logs }: SymptomLoggerCardProp
                     <TableRow key={index}>
                       <TableCell>{log.dateTime.toLocaleString()}</TableCell>
                       <TableCell>{log.phlegmColor}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {log.triggers.length > 0 ? (
+                            log.triggers.map(trigger => <Badge key={trigger} variant="secondary">{trigger}</Badge>)
+                          ) : (
+                            <span className="text-muted-foreground text-xs">None</span>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell className="text-right">{log.inhalerUsage}</TableCell>
                     </TableRow>
                   ))}
