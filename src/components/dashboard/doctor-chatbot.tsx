@@ -20,6 +20,21 @@ type DoctorChatbotProps = {
   sleepReport: SleepReport | null;
 };
 
+// Mock implementation to avoid API rate limits during development.
+const generateMockChatResponse = (input: string): string => {
+  const lowerInput = input.toLowerCase();
+  if (lowerInput.includes("sleep")) {
+    return "Improving sleep is a great goal! Based on your data, your recent sleep quality score was a bit low. To improve it, I recommend establishing a consistent sleep schedule, even on weekends. Also, try to avoid screens an hour before bed and create a relaxing bedtime routine, like reading or listening to calm music.";
+  }
+  if (lowerInput.includes("risk score") || lowerInput.includes("risk")) {
+    return "Your risk score is an important indicator. It seems to be moderate right now. This is influenced by factors like your recent symptom logs and local air quality. To help lower it, be sure to take your prescribed medication consistently and try to limit exposure to outdoor allergens when the pollen count is high.";
+  }
+  if (lowerInput.includes("eat") || lowerInput.includes("diet") || lowerInput.includes("food")) {
+    return "A healthy diet can certainly help manage your condition. I suggest focusing on anti-inflammatory foods like leafy greens, berries, and fatty fish. It's also wise to stay hydrated and limit processed foods and excessive salt, which can sometimes contribute to breathing difficulties.";
+  }
+  return "That's a great question. Based on your current health data, I would recommend that you continue to monitor your symptoms closely. If you notice any significant changes, it's always best to consult with your healthcare provider. Remember to stay hydrated and get plenty of rest.";
+}
+
 export function DoctorChatbot({
   riskScore,
   acousticData,
@@ -41,6 +56,19 @@ export function DoctorChatbot({
     }
   };
 
+  useEffect(() => {
+    // Add initial greeting from the bot
+    if (messages.length === 0) {
+        setMessages([
+            {
+                role: "model",
+                content: "Hello! I'm your AI Health Assistant. I can see your latest health data. Ask me anything about it, like 'How can I improve my sleep?' or 'What does my risk score mean?'\n\n**Disclaimer:** I am an AI assistant. Please consult a real healthcare professional for medical advice."
+            }
+        ])
+    }
+     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(scrollToBottom, [messages]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -49,29 +77,19 @@ export function DoctorChatbot({
 
     const userMessage: ChatMessage = { role: "user", content: input };
     setMessages((prev) => [...prev, userMessage]);
+    const currentInput = input;
     setInput("");
     setIsLoading(true);
     
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
     try {
-      const chatInput: ChatWithDoctorInput = {
-        healthData: {
-          riskScore,
-          coughFrequency: acousticData?.coughFrequency,
-          wheezingDetected: acousticData?.wheezing,
-          breathingRate: acousticData?.breathingRate,
-          aqi: environmentalData?.aqi,
-          pollenCount: environmentalData?.pollen,
-          sleepQualityScore: sleepReport?.sleepScore,
-        },
-        messages: [...messages, userMessage],
-      };
-
-      const response = await chatWithDoctor(chatInput);
-
+      const response = { reply: generateMockChatResponse(currentInput) };
       const botMessage: ChatMessage = { role: "model", content: response.reply };
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
-      console.error("Error chatting with doctor AI:", error);
+      console.error("Error chatting with mock doctor AI:", error);
       toast({
         title: "Error",
         description: "Could not get a response from the AI assistant. Please try again.",
