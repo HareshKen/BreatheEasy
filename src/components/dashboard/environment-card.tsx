@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Wind, Leaf, Loader2, AlertTriangle } from "lucide-react";
-import { fetchWeatherData } from "@/ai/tools/weather";
+import { getEnvironmentalData } from "@/ai/flows/get-environmental-data";
 import type { EnvironmentalData } from "@/lib/types";
 
 type EnvironmentCardProps = {
@@ -27,8 +27,8 @@ export function EnvironmentCard({ onDataFetched, onLoadingChange }: EnvironmentC
       setError(null);
       try {
         // Simulate getting user's location. In a real app, you'd use navigator.geolocation
-        const mockLocation = { latitude: 37.4419, longitude: -122.1430 };
-        const result = await fetchWeatherData(mockLocation.latitude, mockLocation.longitude);
+        const mockLocation = { latitude: 13.0827, longitude: 80.2707 }; // Chennai coordinates
+        const result = await getEnvironmentalData(mockLocation);
         const fetchedData = {
           location: result.locationName,
           aqi: result.aqi,

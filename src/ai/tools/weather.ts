@@ -11,7 +11,7 @@ export const fetchWeatherData = async (latitude: number, longitude: number) => {
 
   // Simulate data based on a mock location
   // A real implementation would use reverse geocoding.
-  const mockLocation = "Palo Alto, CA";
+  const mockLocation = "Chennai, India";
 
   // Simulate AQI and Pollen data
   const aqi = Math.floor(Math.random() * 50) + 1; // Good AQI
