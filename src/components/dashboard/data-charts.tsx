@@ -46,8 +46,11 @@ type DataChartsProps = {
 export function DataCharts({ riskScore, aqi, isLoading }: DataChartsProps) {
   const today = new Date().toISOString().split('T')[0];
 
+  // Filter out today's date from the historical data to avoid duplication
+  const filteredHistory = historyData.filter(d => d.date !== today);
+
   const chartData = [
-    ...historyData,
+    ...filteredHistory,
     {
       date: today,
       riskScore: riskScore, // Use the live risk score
@@ -87,8 +90,10 @@ export function DataCharts({ riskScore, aqi, isLoading }: DataChartsProps) {
                       const date = new Date(value);
                       // Adding a check to avoid invalid date formatting
                       if (isNaN(date.getTime())) return "";
-                      if (value === today) return "Today";
-                      return date.toLocaleString('en-US', { day: 'numeric', month: 'short' })
+                      // Coerce to local timezone to avoid date shifting
+                      const localDate = new Date(date.valueOf() + date.getTimezoneOffset() * 60 * 1000);
+                      if (localDate.toISOString().split('T')[0] === today) return "Today";
+                      return localDate.toLocaleString('en-US', { day: 'numeric', month: 'short' })
                   }}
                 />
                 <YAxis yAxisId="left" domain={[0, 180]} hide />
