@@ -11,8 +11,64 @@ import { AcousticMonitorCard } from '@/components/dashboard/acoustic-monitor-car
 import { EnvironmentCard } from '@/components/dashboard/environment-card';
 import { SleepReportCard } from '@/components/dashboard/sleep-report-card';
 import { useToast } from '@/hooks/use-toast';
-import { calculateRiskScore } from '@/ai/flows/calculate-risk-score';
 import { SymptomLoggerCard } from '@/components/dashboard/symptom-logger-card';
+
+// Mock implementation to avoid API rate limits during development.
+const calculateMockRiskScore = (logs: SymptomLog[]): { riskScore: number; explanation: string } => {
+  if (logs.length === 0) {
+    return { riskScore: 0, explanation: "Log symptoms to see your score." };
+  }
+
+  const lastLog = logs[logs.length - 1];
+  let score = 0;
+  let phlegmScore = 0;
+  let inhalerScore = 0;
+
+  // Phlegm Color Score Contribution
+  switch (lastLog.phlegmColor) {
+    case 'Clear':
+      phlegmScore = Math.floor(Math.random() * 11); // 0-10
+      break;
+    case 'White':
+      phlegmScore = Math.floor(Math.random() * 16) + 10; // 10-25
+      break;
+    case 'Yellow':
+      phlegmScore = Math.floor(Math.random() * 26) + 25; // 25-50
+      break;
+    case 'Green':
+    case 'Other':
+      phlegmScore = Math.floor(Math.random() * 21) + 50; // 50-70
+      break;
+  }
+
+  // Inhaler Usage Score Contribution
+  if (lastLog.inhalerUsage === 0) {
+    inhalerScore = Math.floor(Math.random() * 6); // 0-5
+  } else if (lastLog.inhalerUsage === 1) {
+    inhalerScore = Math.floor(Math.random() * 11) + 5; // 5-15
+  } else if (lastLog.inhalerUsage === 2) {
+    inhalerScore = Math.floor(Math.random() * 16) + 15; // 15-30
+  } else {
+    inhalerScore = Math.floor(Math.random() * 21) + 30; // 30-50
+  }
+  
+  score = Math.min(100, phlegmScore + inhalerScore);
+
+  let explanation = "Your score is based on recent symptom logs. ";
+  if (score > 60) {
+    explanation += `It is elevated due to reports of ${lastLog.phlegmColor.toLowerCase()} phlegm and high inhaler usage.`;
+  } else if (score > 30) {
+    explanation += `It is moderate, influenced by ${lastLog.phlegmColor.toLowerCase()} phlegm and some inhaler usage.`;
+  } else {
+    explanation += "Your reported symptoms indicate a low risk level.";
+  }
+
+  return {
+    riskScore: score,
+    explanation: explanation,
+  };
+};
+
 
 export default function DashboardPage() {
   const [symptomLogs, setSymptomLogs] = useState<SymptomLog[]>([]);
@@ -29,39 +85,37 @@ export default function DashboardPage() {
     const newLogs = [...symptomLogs, { ...log, dateTime: new Date() }];
     setSymptomLogs(newLogs);
 
-    if (newLogs.length === 3) {
-      setIsCalculatingScore(true);
-      setRiskScoreExplanation('Calculating score based on your first 3 symptom logs...');
+    setIsCalculatingScore(true);
+    setRiskScoreExplanation('Calculating score based on your symptom logs...');
+    
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    try {
+      const result = calculateMockRiskScore(newLogs);
+      setCurrentRiskScore(result.riskScore);
+      setRiskScoreExplanation(result.explanation);
+       if (newLogs.length === 1) {
+         toast({
+            title: "Analyzing First Symptom",
+            description: "We're calculating your initial risk score.",
+         });
+       }
+    } catch (error) {
+      console.error("Error calculating mock risk score:", error);
       toast({
-        title: "Analyzing Symptoms",
-        description: "You've logged your first 3 symptoms. We're calculating your initial risk score.",
+        title: "Error",
+        description: "Could not calculate risk score at this time.",
+        variant: "destructive",
       });
-
-      try {
-        const result = await calculateRiskScore({
-          symptomLogs: JSON.stringify(newLogs),
-        });
-        setCurrentRiskScore(result.riskScore);
-        setRiskScoreExplanation(result.explanation);
-      } catch (error) {
-        console.error("Error calculating risk score:", error);
-        toast({
-          title: "Error",
-          description: "Could not calculate risk score at this time.",
-          variant: "destructive",
-        });
-        setRiskScoreExplanation('Could not calculate score. Please try again.');
-      } finally {
-        setIsCalculatingScore(false);
-      }
-    } else if (newLogs.length > 3) {
-      // Optional: decide if you want to recalculate on every new log after 3.
-      // For now, we only calculate on the first 3.
+      setRiskScoreExplanation('Could not calculate score. Please try again.');
+    } finally {
+      setIsCalculatingScore(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen w-full flex-col">
+    <div className="flex min-h-screen w-full flex-col bg-background text-foreground">
       <Header />
       <main className="flex-1 p-4 sm:p-6 md:p-8">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -97,7 +151,7 @@ export default function DashboardPage() {
             <DataCharts 
               riskScore={currentRiskScore}
               aqi={environmentalData?.aqi}
-              isLoading={isFetchingAqi || (symptomLogs.length >= 3 && isCalculatingScore)}
+              isLoading={isFetchingAqi || (symptomLogs.length >= 1 && isCalculatingScore)}
             />
           </div>
         </div>

@@ -60,7 +60,7 @@ export function DataCharts({ riskScore, aqi, isLoading }: DataChartsProps) {
   ];
 
   return (
-    <Card>
+    <Card className="shadow-cyan-500/10 hover:shadow-cyan-500/20">
       <CardHeader>
         <CardTitle>Historical Trends</CardTitle>
         <CardDescription>View your risk score, symptoms, and environmental factors including today.</CardDescription>
