@@ -4,6 +4,7 @@ import { AiCards } from '@/components/dashboard/ai-cards';
 import { DataCharts } from '@/components/dashboard/data-charts';
 import { AcousticMonitorCard } from '@/components/dashboard/acoustic-monitor-card';
 import { EnvironmentCard } from '@/components/dashboard/environment-card';
+import { SleepReportCard } from '@/components/dashboard/sleep-report-card';
 
 export default function DashboardPage() {
   return (
@@ -25,6 +26,9 @@ export default function DashboardPage() {
           </div>
           <div className="col-span-1 md:col-span-1 lg:col-span-2">
             <EnvironmentCard />
+          </div>
+          <div className="col-span-1 md:col-span-2 lg:col-span-4">
+            <SleepReportCard />
           </div>
         </div>
       </main>
