@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Wind, Leaf, Loader2, AlertTriangle } from "lucide-react";
-import { getEnvironmentalData } from "@/ai/flows/get-environmental-data";
+import { fetchWeatherData } from "@/ai/tools/weather";
 import type { EnvironmentalData } from "@/lib/types";
 
 type EnvironmentCardProps = {
@@ -22,27 +22,41 @@ export function EnvironmentCard({ onDataFetched, onLoadingChange }: EnvironmentC
   }, [isLoading, onLoadingChange]);
 
   useEffect(() => {
-    const fetchEnvData = async () => {
+    const fetchEnvData = () => {
       setIsLoading(true);
       setError(null);
-      try {
-        // Simulate getting user's location. In a real app, you'd use navigator.geolocation
-        const mockLocation = { latitude: 13.0827, longitude: 80.2707 }; // Chennai coordinates
-        const result = await getEnvironmentalData(mockLocation);
-        const fetchedData = {
-          location: result.locationName,
-          aqi: result.aqi,
-          pollen: result.pollen,
-        }
-        setData(fetchedData);
-        onDataFetched(fetchedData);
-      } catch (e) {
-        console.error("Error fetching environmental data:", e);
-        setError("Could not retrieve environmental data at this time. Please try again.");
-        onDataFetched(null);
-      } finally {
+      
+      if (!navigator.geolocation) {
+        setError("Geolocation is not supported by your browser.");
         setIsLoading(false);
+        onDataFetched(null);
+        return;
       }
+
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          const result = await fetchWeatherData(latitude, longitude);
+          const fetchedData = {
+            location: result.locationName,
+            aqi: result.aqi,
+            pollen: result.pollen,
+          }
+          setData(fetchedData);
+          onDataFetched(fetchedData);
+        } catch (e) {
+          console.error("Error fetching environmental data:", e);
+          setError("Could not retrieve environmental data at this time. Please try again.");
+          onDataFetched(null);
+        } finally {
+          setIsLoading(false);
+        }
+      }, (error) => {
+        console.error("Geolocation error:", error);
+        setError("Could not get location. Please enable location services.");
+        setIsLoading(false);
+        onDataFetched(null);
+      });
     };
 
     fetchEnvData();
