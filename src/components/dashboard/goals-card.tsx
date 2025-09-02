@@ -32,6 +32,7 @@ type GoalsCardProps = {
   addGoal: (goal: Goal) => void;
   symptomLogs: SymptomLog[];
   sleepReport: SleepReport | null;
+  isInSheet?: boolean;
 };
 
 const getInhalerUsageLast7Days = (logs: SymptomLog[]): number => {
@@ -42,7 +43,7 @@ const getInhalerUsageLast7Days = (logs: SymptomLog[]): number => {
     .reduce((sum, log) => sum + log.inhalerUsage, 0);
 };
 
-export function GoalsCard({ goals, addGoal, symptomLogs, sleepReport }: GoalsCardProps) {
+export function GoalsCard({ goals, addGoal, symptomLogs, sleepReport, isInSheet = false }: GoalsCardProps) {
   const [open, setOpen] = useState(false);
   const [goalType, setGoalType] = useState<Goal['type'] | ''>('');
   const [targetValue, setTargetValue] = useState('0');
@@ -109,67 +110,9 @@ export function GoalsCard({ goals, addGoal, symptomLogs, sleepReport }: GoalsCar
     }
     return { progress: 0, progressText: 'N/A', icon: null };
   };
-
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle>Personalized Goals</CardTitle>
-          <CardDescription>Set and track your health objectives.</CardDescription>
-        </div>
-         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm">
-                <PlusCircle />
-                New Goal
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <form onSubmit={handleSubmit}>
-                <DialogHeader>
-                  <DialogTitle>Set a New Goal</DialogTitle>
-                  <DialogDescription>
-                    Choose a goal and set your target to start tracking.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="goal-type" className="text-right">
-                      Goal Type
-                    </Label>
-                    <Select value={goalType} onValueChange={(value) => setGoalType(value as Goal['type'])}>
-                      <SelectTrigger id="goal-type" className="col-span-3">
-                        <SelectValue placeholder="Select a goal" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="inhalerUsage">Reduce Inhaler Usage</SelectItem>
-                        <SelectItem value="sleepScore">Improve Sleep Score</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="target-value" className="text-right">
-                      Target
-                    </Label>
-                    <Input
-                      id="target-value"
-                      type="number"
-                      value={targetValue}
-                      onChange={(e) => setTargetValue(e.target.value)}
-                      className="col-span-3"
-                      min="0"
-                      placeholder={goalType === 'inhalerUsage' ? 'e.g., 5 times/week' : 'e.g., 80'}
-                    />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button type="submit">Set Goal</Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
-      </CardHeader>
-      <CardContent>
+  
+  const cardContent = (
+    <>
         {goals.length > 0 ? (
           <div className="space-y-6">
             {goals.map((goal) => {
@@ -198,6 +141,85 @@ export function GoalsCard({ goals, addGoal, symptomLogs, sleepReport }: GoalsCar
             <p className="text-sm">Click "New Goal" to start tracking your progress!</p>
           </div>
         )}
+    </>
+  );
+
+  const dialog = (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm">
+          <PlusCircle />
+          New Goal
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <form onSubmit={handleSubmit}>
+          <DialogHeader>
+            <DialogTitle>Set a New Goal</DialogTitle>
+            <DialogDescription>
+              Choose a goal and set your target to start tracking.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="goal-type" className="text-right">
+                Goal Type
+              </Label>
+              <Select value={goalType} onValueChange={(value) => setGoalType(value as Goal['type'])}>
+                <SelectTrigger id="goal-type" className="col-span-3">
+                  <SelectValue placeholder="Select a goal" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="inhalerUsage">Reduce Inhaler Usage</SelectItem>
+                  <SelectItem value="sleepScore">Improve Sleep Score</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="target-value" className="text-right">
+                Target
+              </Label>
+              <Input
+                id="target-value"
+                type="number"
+                value={targetValue}
+                onChange={(e) => setTargetValue(e.target.value)}
+                className="col-span-3"
+                min="0"
+                placeholder={goalType === 'inhalerUsage' ? 'e.g., 5 times/week' : 'e.g., 80'}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="submit">Set Goal</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+
+  if (isInSheet) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-end">
+          {dialog}
+        </div>
+        {cardContent}
+      </div>
+    )
+  }
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Personalized Goals</CardTitle>
+          <CardDescription>Set and track your health objectives.</CardDescription>
+        </div>
+        {dialog}
+      </CardHeader>
+      <CardContent>
+        {cardContent}
       </CardContent>
     </Card>
   );

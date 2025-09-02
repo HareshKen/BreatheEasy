@@ -13,7 +13,6 @@ import { useToast } from '@/hooks/use-toast';
 import { SymptomLoggerCard } from '@/components/dashboard/symptom-logger-card';
 import { SleepMonitorCard } from '@/components/dashboard/sleep-monitor-card';
 import { FutureRiskCard } from '@/components/dashboard/future-risk-card';
-import { GoalsCard } from '@/components/dashboard/goals-card';
 import { riskScores } from '@/lib/mock-data';
 
 // Mock implementation to avoid API rate limits during development.
@@ -128,7 +127,12 @@ export default function DashboardPage() {
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-background text-foreground">
-      <Header />
+      <Header 
+        goals={goals} 
+        addGoal={addGoal} 
+        symptomLogs={symptomLogs} 
+        sleepReport={sleepReport} 
+      />
       <main className="flex-1 p-4 sm:p-6 md:p-8">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
           <div className="col-span-1 md:col-span-1 lg:col-span-2">
@@ -155,14 +159,6 @@ export default function DashboardPage() {
           </div>
            <div className="lg:col-span-2 md:col-span-2">
             <FutureRiskCard historicalRiskScores={riskScores.history} />
-          </div>
-          <div className="col-span-1 md:col-span-2 lg:col-span-4">
-            <GoalsCard 
-              goals={goals} 
-              addGoal={addGoal} 
-              symptomLogs={symptomLogs} 
-              sleepReport={sleepReport} 
-            />
           </div>
           <div className="col-span-1 md:col-span-2 lg:col-span-4">
             <DataCharts 
