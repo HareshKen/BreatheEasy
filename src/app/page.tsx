@@ -64,23 +64,6 @@ export default function DashboardPage() {
       <Header addSymptomLog={addSymptomLog} />
       <main className="flex-1 p-4 sm:p-6 md:p-8">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-          <div className="lg:col-span-1 md:col-span-2">
-            <RiskScore 
-              score={currentRiskScore} 
-              explanation={riskScoreExplanation} 
-              isLoading={isCalculatingScore} 
-            />
-          </div>
-          <div className="lg:col-span-3 md:col-span-2">
-            <AiCards />
-          </div>
-          <div className="col-span-1 md:col-span-2 lg:col-span-4">
-            <DataCharts 
-              riskScore={currentRiskScore}
-              aqi={environmentalData?.aqi}
-              isLoading={isFetchingAqi}
-            />
-          </div>
           <div className="col-span-1 md:col-span-1 lg:col-span-2">
             <AcousticMonitorCard />
           </div>
@@ -92,6 +75,23 @@ export default function DashboardPage() {
           </div>
           <div className="col-span-1 md:col-span-2 lg:col-span-4">
             <SymptomHistoryCard logs={symptomLogs} />
+          </div>
+          <div className="lg:col-span-3 md:col-span-2">
+            <AiCards />
+          </div>
+          <div className="lg:col-span-1 md:col-span-2">
+            <RiskScore 
+              score={currentRiskScore} 
+              explanation={riskScoreExplanation} 
+              isLoading={isCalculatingScore} 
+            />
+          </div>
+          <div className="col-span-1 md:col-span-2 lg:col-span-4">
+            <DataCharts 
+              riskScore={currentRiskScore}
+              aqi={environmentalData?.aqi}
+              isLoading={isFetchingAqi}
+            />
           </div>
         </div>
       </main>
