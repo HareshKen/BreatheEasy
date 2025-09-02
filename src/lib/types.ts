@@ -23,3 +23,9 @@ export interface DailyData {
   coughFrequency?: number;
   aqi?: number;
 }
+
+export interface SymptomLog {
+    dateTime: Date;
+    phlegmColor: 'Clear' | 'White' | 'Yellow' | 'Green' | 'Other';
+    inhalerUsage: number;
+}

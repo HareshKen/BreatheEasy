@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from "react";
@@ -22,18 +23,42 @@ import {
 } from "@/components/ui/select";
 import { PlusCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import type { SymptomLog } from "@/lib/types";
 
-export function SymptomLogger() {
+type SymptomLoggerProps = {
+  addSymptomLog: (log: Omit<SymptomLog, 'dateTime'>) => void;
+};
+
+export function SymptomLogger({ addSymptomLog }: SymptomLoggerProps) {
   const [open, setOpen] = useState(false);
+  const [phlegmColor, setPhlegmColor] = useState("");
+  const [inhalerUsage, setInhalerUsage] = useState("0");
   const { toast } = useToast();
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    // Logic to save symptom data would go here
+    if (!phlegmColor) {
+        toast({
+            title: "Missing Information",
+            description: "Please select a phlegm color.",
+            variant: "destructive",
+        });
+        return;
+    }
+
+    addSymptomLog({
+        phlegmColor: phlegmColor as SymptomLog['phlegmColor'],
+        inhalerUsage: parseInt(inhalerUsage, 10),
+    });
+
     toast({
       title: "Symptoms Logged",
       description: "Your symptoms have been successfully recorded.",
     });
+
+    // Reset form and close dialog
+    setPhlegmColor("");
+    setInhalerUsage("0");
     setOpen(false);
   };
 
@@ -58,16 +83,16 @@ export function SymptomLogger() {
               <Label htmlFor="phlegm-color" className="text-right">
                 Phlegm Color
               </Label>
-              <Select>
+              <Select value={phlegmColor} onValueChange={setPhlegmColor}>
                 <SelectTrigger id="phlegm-color" className="col-span-3">
                   <SelectValue placeholder="Select color" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="clear">Clear</SelectItem>
-                  <SelectItem value="white">White</SelectItem>
-                  <SelectItem value="yellow">Yellow</SelectItem>
-                  <SelectItem value="green">Green</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="Clear">Clear</SelectItem>
+                  <SelectItem value="White">White</SelectItem>
+                  <SelectItem value="Yellow">Yellow</SelectItem>
+                  <SelectItem value="Green">Green</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -78,7 +103,8 @@ export function SymptomLogger() {
               <Input
                 id="inhaler-usage"
                 type="number"
-                defaultValue="0"
+                value={inhalerUsage}
+                onChange={(e) => setInhalerUsage(e.target.value)}
                 className="col-span-3"
                 min="0"
               />

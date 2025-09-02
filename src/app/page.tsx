@@ -1,3 +1,8 @@
+
+'use client';
+
+import { useState } from 'react';
+import type { SymptomLog } from '@/lib/types';
 import { Header } from '@/components/dashboard/header';
 import { RiskScore } from '@/components/dashboard/risk-score';
 import { AiCards } from '@/components/dashboard/ai-cards';
@@ -5,11 +10,18 @@ import { DataCharts } from '@/components/dashboard/data-charts';
 import { AcousticMonitorCard } from '@/components/dashboard/acoustic-monitor-card';
 import { EnvironmentCard } from '@/components/dashboard/environment-card';
 import { SleepReportCard } from '@/components/dashboard/sleep-report-card';
+import { SymptomHistoryCard } from '@/components/dashboard/symptom-history-card';
 
 export default function DashboardPage() {
+  const [symptomLogs, setSymptomLogs] = useState<SymptomLog[]>([]);
+
+  const addSymptomLog = (log: Omit<SymptomLog, 'dateTime'>) => {
+    setSymptomLogs(prevLogs => [...prevLogs, { ...log, dateTime: new Date() }]);
+  };
+
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <Header />
+      <Header addSymptomLog={addSymptomLog} />
       <main className="flex-1 p-4 sm:p-6 md:p-8">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
           <div className="lg:col-span-1 md:col-span-2">
@@ -29,6 +41,9 @@ export default function DashboardPage() {
           </div>
           <div className="col-span-1 md:col-span-2 lg:col-span-4">
             <SleepReportCard />
+          </div>
+          <div className="col-span-1 md:col-span-2 lg:col-span-4">
+            <SymptomHistoryCard logs={symptomLogs} />
           </div>
         </div>
       </main>
