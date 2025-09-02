@@ -18,6 +18,8 @@ export interface EnvironmentalData {
   location: string;
   aqi: number;
   pollen: 'Low' | 'Moderate' | 'High';
+  temperature: number;
+  humidity: number;
 }
 
 export interface DailyData {

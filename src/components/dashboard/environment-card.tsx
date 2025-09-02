@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Wind, Leaf, Loader2, AlertTriangle } from "lucide-react";
+import { Wind, Leaf, Loader2, AlertTriangle, Thermometer, Droplets } from "lucide-react";
 import { fetchWeatherData } from "@/ai/tools/weather";
 import type { EnvironmentalData } from "@/lib/types";
 
@@ -37,10 +37,12 @@ export function EnvironmentCard({ onDataFetched, onLoadingChange }: EnvironmentC
         try {
           const { latitude, longitude } = position.coords;
           const result = await fetchWeatherData(latitude, longitude);
-          const fetchedData = {
+          const fetchedData: EnvironmentalData = {
             location: result.locationName,
             aqi: result.aqi,
             pollen: result.pollen,
+            temperature: result.temperature,
+            humidity: result.humidity,
           }
           setData(fetchedData);
           onDataFetched(fetchedData);
@@ -107,6 +109,24 @@ export function EnvironmentCard({ onDataFetched, onLoadingChange }: EnvironmentC
                 <span className="font-medium">Pollen Count</span>
               </div>
               <span className="text-lg font-semibold">{data.pollen}</span>
+            </div>
+             <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-secondary p-2 rounded-md">
+                  <Thermometer className="h-5 w-5 text-secondary-foreground" />
+                </div>
+                <span className="font-medium">Temperature</span>
+              </div>
+              <span className="text-lg font-semibold">{data.temperature}°C</span>
+            </div>
+             <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-secondary p-2 rounded-md">
+                  <Droplets className="h-5 w-5 text-secondary-foreground" />
+                </div>
+                <span className="font-medium">Humidity</span>
+              </div>
+              <span className="text-lg font-semibold">{data.humidity}%</span>
             </div>
           </>
         ) : null}

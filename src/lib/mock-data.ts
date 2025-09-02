@@ -73,16 +73,20 @@ export const acousticData: { today: AcousticData, history: AcousticData[] } = {
   history: acousticHistory50,
 };
 
-export const environmentalData: { today: EnvironmentalData; history: EnvironmentalData[] } = {
+export const environmentalData: { today: Omit<EnvironmentalData, 'date'>; history: EnvironmentalData[] } = {
   today: {
     location: 'Palo Alto',
     aqi: 155,
     pollen: 'High',
+    temperature: 28,
+    humidity: 75,
   },
   history: dates.map((date, i) => ({
     date,
     location: 'Palo Alto',
     aqi: Math.floor(Math.random() * 50) + 110 - i * 5,
     pollen: i > 3 ? 'High' : 'Moderate',
+    temperature: 28 - i,
+    humidity: 75 + i * 2,
   })),
 };

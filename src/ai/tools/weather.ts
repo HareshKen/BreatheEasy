@@ -17,11 +17,15 @@ export const fetchWeatherData = async (latitude: number, longitude: number) => {
   const aqi = Math.floor(Math.random() * 50) + 1; // Good AQI
   const pollenLevels = ['Low', 'Moderate', 'High'];
   const pollen = pollenLevels[Math.floor(Math.random() * pollenLevels.length)] as 'Low' | 'Moderate' | 'High';
+  const temperature = Math.floor(Math.random() * 10) + 25; // 25-34 C
+  const humidity = Math.floor(Math.random() * 30) + 60; // 60-89%
 
   return {
     locationName: mockLocation,
     aqi,
     pollen,
+    temperature,
+    humidity,
   };
 };
 
@@ -37,6 +41,8 @@ export const getCurrentWeather = ai.defineTool(
         locationName: z.string().describe('The name of the location.'),
         aqi: z.number().describe('The Air Quality Index (AQI) value.'),
         pollen: z.enum(['Low', 'Moderate', 'High']).describe('The pollen count level.'),
+        temperature: z.number().describe('The current temperature in Celsius.'),
+        humidity: z.number().describe('The current humidity percentage.'),
     }),
   },
   async (input) => {

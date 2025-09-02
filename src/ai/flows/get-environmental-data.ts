@@ -21,6 +21,8 @@ const GetEnvironmentalDataOutputSchema = z.object({
   aqi: z.number().describe('The Air Quality Index (AQI) value.'),
   pollen: z.enum(['Low', 'Moderate', 'High']).describe('The pollen count level.'),
   locationName: z.string().describe('The name of the location.'),
+  temperature: z.number().describe('The current temperature in Celsius.'),
+  humidity: z.number().describe('The current humidity percentage.'),
 });
 export type GetEnvironmentalDataOutput = z.infer<typeof GetEnvironmentalDataOutputSchema>;
 
@@ -35,7 +37,7 @@ const prompt = ai.definePrompt({
   input: {schema: GetEnvironmentalDataInputSchema},
   output: {schema: GetEnvironmentalDataOutputSchema},
   tools: [getCurrentWeather],
-  prompt: `You are a weather and air quality API. Based on the provided latitude ({{{latitude}}}) and longitude ({{{longitude}}}), use the available tools to return a realistic Air Quality Index (AQI) value, a pollen count level ('Low', 'Moderate', or 'High'), and a plausible city name for that location.
+  prompt: `You are a weather and air quality API. Based on the provided latitude ({{{latitude}}}) and longitude ({{{longitude}}}), use the available tools to return a realistic Air Quality Index (AQI) value, a pollen count level ('Low', 'Moderate', or 'High'), a plausible city name for that location, the current temperature in Celsius, and the current humidity percentage.
 
   Do not mention that you are an AI or that this is simulated. Act as a real data provider.
   `,
