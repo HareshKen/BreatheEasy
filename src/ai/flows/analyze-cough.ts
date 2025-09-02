@@ -20,7 +20,9 @@ const AnalyzeCoughInputSchema = z.object({
 export type AnalyzeCoughInput = z.infer<typeof AnalyzeCoughInputSchema>;
 
 const AnalyzeCoughOutputSchema = z.object({
-  analysis: z.string().describe('A detailed analysis of the cough, describing its characteristics (e.g., productive, non-productive, harsh, wheezy) without providing a medical diagnosis.'),
+  coughType: z.enum(['Productive', 'Non-productive', 'Uncertain']).describe("The type of cough, classified as either 'Productive' (wet, mucousy) or 'Non-productive' (dry, hacking)."),
+  characteristics: z.string().describe("A comma-separated list of acoustic characteristics observed (e.g., harsh, wheezy, barking, sharp)."),
+  summary: z.string().describe('A brief, one-sentence summary of the analysis.'),
 });
 export type AnalyzeCoughOutput = z.infer<typeof AnalyzeCoughOutputSchema>;
 
@@ -38,8 +40,9 @@ const prompt = ai.definePrompt({
 
   Analyze the following audio data and describe its acoustic characteristics. Consider aspects like:
   - Is it a productive (wet, mucousy) or non-productive (dry, hacking) cough?
-  - What is the tone? (e.g., harsh, brassy, wheezy, barking)
-  - Note the intensity and frequency if possible from the short clip.
+  - What are its primary characteristics? (e.g., harsh, brassy, wheezy, barking, sharp)
+
+  Return the analysis in the specified structured format. The summary should be a very brief, single sentence.
 
   IMPORTANT: Do not provide any medical advice, diagnosis, or suggest potential conditions. Your analysis must be strictly limited to the sounds you hear in the audio.
 

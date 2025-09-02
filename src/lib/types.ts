@@ -29,3 +29,9 @@ export interface SymptomLog {
     phlegmColor: 'Clear' | 'White' | 'Yellow' | 'Green' | 'Other';
     inhalerUsage: number;
 }
+
+export interface AnalyzeCoughOutput {
+  coughType: 'Productive' | 'Non-productive' | 'Uncertain';
+  characteristics: string;
+  summary: string;
+}

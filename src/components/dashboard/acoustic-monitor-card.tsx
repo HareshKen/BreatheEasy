@@ -4,26 +4,28 @@
 import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Ear, Waves, HeartPulse, Lightbulb, Mic, Square, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Ear, Waves, HeartPulse, Lightbulb, Mic, Square, Loader2, TestTube, ListTree } from "lucide-react";
 import { acousticData } from "@/lib/mock-data";
 import { analyzeCough } from "@/ai/flows/analyze-cough";
-import type { AcousticData } from "@/lib/types";
+import type { AcousticData, AnalyzeCoughOutput } from "@/lib/types";
 
 export function AcousticMonitorCard() {
   const [displayData, setDisplayData] = useState<AcousticData | null>(null);
   const [isRecording, setIsRecording] = useState(false);
-  const [analysis, setAnalysis] = useState("");
+  const [analysis, setAnalysis] = useState<AnalyzeCoughOutput | null>(null);
+  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
   useEffect(() => {
-    // Use today's consistent, pre-generated data
     setDisplayData(acousticData.today);
   }, []);
 
   const handleStartRecording = async () => {
-    setAnalysis("");
+    setAnalysis(null);
+    setError("");
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaRecorderRef.current = new MediaRecorder(stream);
@@ -42,13 +44,12 @@ export function AcousticMonitorCard() {
           const base64Audio = reader.result as string;
           try {
             const result = await analyzeCough({ audioDataUri: base64Audio });
-            setAnalysis(result.analysis);
+            setAnalysis(result);
           } catch (error) {
             console.error("Error analyzing cough:", error);
-            setAnalysis("Could not analyze cough at this time. Please try again.");
+            setError("Could not analyze cough at this time. Please try again.");
           } finally {
             setIsLoading(false);
-            // Stop all tracks on the stream
             stream.getTracks().forEach(track => track.stop());
           }
         };
@@ -58,7 +59,7 @@ export function AcousticMonitorCard() {
       setIsRecording(true);
     } catch (err) {
       console.error("Error accessing microphone:", err);
-      setAnalysis("Microphone access was denied. Please allow access to use this feature.");
+      setError("Microphone access was denied. Please allow access to use this feature.");
     }
   };
 
@@ -114,8 +115,26 @@ export function AcousticMonitorCard() {
             {isLoading && <Loader2 className="h-5 w-5 animate-spin" />}
           </div>
           {analysis && (
-            <div className="mt-4 rounded-md border bg-muted/50 p-3">
-                <p className="text-sm text-foreground">{analysis}</p>
+            <div className="mt-4 rounded-md border bg-muted/50 p-3 space-y-3">
+                <p className="text-sm italic text-foreground">"{analysis.summary}"</p>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                  <div className="flex items-center gap-2 font-medium">
+                    <TestTube className="h-4 w-4 text-primary" />
+                    <span>Cough Type:</span>
+                  </div>
+                  <Badge variant="outline" className="justify-center">{analysis.coughType}</Badge>
+
+                  <div className="flex items-center gap-2 font-medium">
+                    <ListTree className="h-4 w-4 text-primary" />
+                    <span>Attributes:</span>
+                  </div>
+                  <span className="text-right text-muted-foreground">{analysis.characteristics}</span>
+                </div>
+            </div>
+          )}
+          {error && (
+            <div className="mt-4 rounded-md border border-destructive/50 bg-destructive/10 p-3">
+                <p className="text-sm text-destructive">{error}</p>
             </div>
           )}
         </div>
