@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -18,12 +19,14 @@ export function SleepReportCard() {
   const [isLoading, setIsLoading] = useState(false);
   
   // Simulate nightly data from mock data by picking a random day
-  const nightlyData = ((): { totalCoughs: number; wheezingIncidents: number; avgBreathingRate: number } => {
+  const nightlyData = ((): { μ_BR: number, σ_BR: number, CPH: number, P_Wheeze: number, EPH: number } => {
     const randomDay = acousticData.history[Math.floor(Math.random() * acousticData.history.length)];
     return {
-      totalCoughs: randomDay.coughFrequency,
-      wheezingIncidents: randomDay.wheezing ? 1 : 0,
-      avgBreathingRate: randomDay.breathingRate,
+      μ_BR: randomDay.breathingRate,
+      σ_BR: Math.round(Math.random() * 5 * 10) / 10, // Simulate stability
+      CPH: randomDay.coughFrequency,
+      P_Wheeze: randomDay.wheezing ? Math.floor(Math.random() * 10) : 0, // Simulate wheeze percentage
+      EPH: Math.floor(Math.random() * 8), // Simulate other disturbances
     };
   })();
 
