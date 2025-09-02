@@ -2,13 +2,11 @@
 "use client";
 
 import { useState } from "react";
-import { generateDataInsights } from "@/ai/flows/generate-data-insights";
 import { personalizedActionRecommendations } from "@/ai/flows/personalized-action-recommendations";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Lightbulb, Sparkles, Loader2 } from "lucide-react";
-import { acousticData as mockAcousticData, environmentalData as mockEnvironmentalData, riskScores as mockRiskScores } from "@/lib/mock-data";
 import type { SymptomLog, AcousticData, EnvironmentalData, SleepReport } from "@/lib/types";
 
 type AiCardsProps = {
@@ -40,29 +38,21 @@ export function AiCards({ riskScore, symptomLogs, acousticData, environmentalDat
   const handleGetRecommendations = async () => {
     setIsLoadingRecs(true);
     setRecommendations("");
-    try {
-      // Use live data if available, otherwise fall back to the most recent mock data.
-      const currentAcoustic = acousticData ?? mockAcousticData.history[mockAcousticData.history.length - 1];
-      const currentEnv = environmentalData ?? mockEnvironmentalData.history[mockEnvironmentalData.history.length - 1];
-      const lastSymptom = symptomLogs.length > 0 ? symptomLogs[symptomLogs.length - 1] : { phlegmColor: 'N/A', inhalerUsage: 'N/A' };
-
-      const result = await personalizedActionRecommendations({
-        exacerbationRiskScore: riskScore,
-        acousticDataTrends: `Cough Freq: ${currentAcoustic.coughFrequency}/hr, Wheezing: ${currentAcoustic.wheezing ? 'Yes' : 'No'}, Breathing: ${currentAcoustic.breathingRate}bpm.`,
-        environmentalFactors: `AQI: ${currentEnv.aqi}, Pollen: ${currentEnv.pollen}.`,
-        symptomData: `Last log: Phlegm was ${lastSymptom.phlegmColor}, Inhaler used ${lastSymptom.inhalerUsage} times.`,
-      });
-      setRecommendations(result.recommendedActions);
-    } catch (error) {
-      console.error("Error getting recommendations:", error);
-      setRecommendations("Could not get recommendations at this time. Please try again later.");
-    } finally {
+     // This is a mock implementation to avoid hitting API rate limits during development.
+    setTimeout(() => {
+      let recText = "Your risk score is currently low. Continue to monitor your symptoms and stick to your current medication plan. ";
+      if (riskScore > 66) {
+        recText = "Your risk score is high. It is recommended to use your rescue inhaler as prescribed and avoid strenuous activities. Pay close attention to your symptoms and consider contacting your healthcare provider if they worsen.";
+      } else if (riskScore > 33) {
+        recText = "Your risk score is moderate. Be mindful of environmental triggers like high pollen or AQI. Ensure you are consistent with your daily medication and keep your rescue inhaler nearby.";
+      }
+      setRecommendations(recText);
       setIsLoadingRecs(false);
-    }
+    }, 1000);
   };
 
   return (
-    <Card className="h-full">
+    <Card className="h-full shadow-cyan-500/10 hover:shadow-cyan-500/20">
       <Tabs defaultValue="insights" className="flex flex-col h-full">
         <CardHeader>
           <CardTitle>AI Assistant</CardTitle>
