@@ -10,7 +10,6 @@ import { DataCharts } from '@/components/dashboard/data-charts';
 import { AcousticMonitorCard } from '@/components/dashboard/acoustic-monitor-card';
 import { EnvironmentCard } from '@/components/dashboard/environment-card';
 import { SleepReportCard } from '@/components/dashboard/sleep-report-card';
-import { SymptomHistoryCard } from '@/components/dashboard/symptom-history-card';
 import { useToast } from '@/hooks/use-toast';
 import { calculateRiskScore } from '@/ai/flows/calculate-risk-score';
 import { SymptomLoggerCard } from '@/components/dashboard/symptom-logger-card';
@@ -73,13 +72,10 @@ export default function DashboardPage() {
             <EnvironmentCard onDataFetched={setEnvironmentalData} onLoadingChange={setIsFetchingAqi} />
           </div>
           <div className="col-span-1 md:col-span-2 lg:col-span-4">
-            <SymptomLoggerCard addSymptomLog={addSymptomLog} />
-          </div>
-          <div className="col-span-1 md:col-span-2 lg:col-span-4">
             <SleepReportCard acousticData={acousticData} onReportGenerated={setSleepReport} />
           </div>
-          <div className="col-span-1 md:col-span-2 lg:col-span-4">
-            <SymptomHistoryCard logs={symptomLogs} />
+           <div className="col-span-1 md:col-span-2 lg:col-span-4">
+            <SymptomLoggerCard addSymptomLog={addSymptomLog} logs={symptomLogs} />
           </div>
           <div className="lg:col-span-3 md:col-span-2">
             <AiCards 
