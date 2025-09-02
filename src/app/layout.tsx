@@ -5,7 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { ClientLayout } from '@/components/client-layout';
 
 export const metadata: Metadata = {
-  title: 'RespiGuard',
+  title: 'BreatheEasy',
   description: 'Predictive Monitoring for Chronic Respiratory Disease',
 };
 
