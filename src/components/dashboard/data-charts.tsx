@@ -1,3 +1,4 @@
+
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -11,14 +12,26 @@ import {
 } from "@/components/ui/chart"
 import { ComposedChart, Line, XAxis, YAxis, CartesianGrid, Bar, ResponsiveContainer } from "recharts"
 import { riskScores, acousticData, environmentalData } from "@/lib/mock-data"
-import { DailyData } from "@/lib/types"
+import type { DailyData } from "@/lib/types"
 
-const chartData: DailyData[] = riskScores.history.map((rs, index) => ({
+const historyData: DailyData[] = riskScores.history.map((rs, index) => ({
   date: rs.date,
   riskScore: rs.score,
   coughFrequency: acousticData.history[index % acousticData.history.length]?.coughFrequency,
   aqi: environmentalData.history[index]?.aqi,
 }));
+
+// Add today's data to the chart
+const today = new Date().toISOString().split('T')[0];
+const todayData: DailyData = {
+    date: today,
+    riskScore: riskScores.today,
+    coughFrequency: acousticData.today.coughFrequency,
+    aqi: environmentalData.today.aqi,
+};
+
+const chartData = [...historyData, todayData];
+
 
 const chartConfig = {
   riskScore: {
@@ -40,7 +53,7 @@ export function DataCharts() {
     <Card>
       <CardHeader>
         <CardTitle>Historical Trends</CardTitle>
-        <CardDescription>View your risk score, symptoms, and environmental factors over the last 7 days.</CardDescription>
+        <CardDescription>View your risk score, symptoms, and environmental factors including today.</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[250px] w-full">
@@ -60,10 +73,14 @@ export function DataCharts() {
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
-                tickFormatter={(value) => new Date(value).toLocaleString('en-US', { day: 'numeric', month: 'short' })}
+                tickFormatter={(value) => {
+                    const date = new Date(value);
+                    if (value === today) return "Today";
+                    return date.toLocaleString('en-US', { day: 'numeric', month: 'short' })
+                }}
               />
               <YAxis yAxisId="left" domain={[0, 180]} hide />
-              <YAxis yAxisId="right" orientation="right" domain={[0, 35]} hide />
+              <YAxis yAxisId="right" orientation="right" domain={[0, 40]} hide />
               <ChartTooltip
                 cursor={true}
                 content={<ChartTooltipContent indicator="line" />}
