@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Bed, BarChart, Loader2, Sparkles, Moon } from "lucide-react";
 import { acousticData } from "@/lib/mock-data";
 import { analyzeSleepData } from "@/ai/flows/analyze-sleep-data";
+import type { AcousticData } from "@/lib/types";
 
 type SleepReport = {
   sleepScore: number;
@@ -16,12 +17,15 @@ export function SleepReportCard() {
   const [report, setReport] = useState<SleepReport | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   
-  // Simulate nightly data from mock data
-  const nightlyData = {
-    totalCoughs: acousticData.history.reduce((sum, day) => sum + day.coughFrequency, 0),
-    wheezingIncidents: acousticData.history.filter(day => day.wheezing).length,
-    avgBreathingRate: acousticData.today.breathingRate,
-  };
+  // Simulate nightly data from mock data by picking a random day
+  const nightlyData = ((): { totalCoughs: number; wheezingIncidents: number; avgBreathingRate: number } => {
+    const randomDay = acousticData.history[Math.floor(Math.random() * acousticData.history.length)];
+    return {
+      totalCoughs: randomDay.coughFrequency,
+      wheezingIncidents: randomDay.wheezing ? 1 : 0,
+      avgBreathingRate: randomDay.breathingRate,
+    };
+  })();
 
   const handleGenerateReport = async () => {
     setIsLoading(true);

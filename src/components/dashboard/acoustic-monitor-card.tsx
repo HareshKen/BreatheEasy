@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Ear, Waves, HeartPulse, Lightbulb, Mic, Square, Loader2 } from "lucide-react";
@@ -8,7 +8,10 @@ import { acousticData } from "@/lib/mock-data";
 import { analyzeCough } from "@/ai/flows/analyze-cough";
 
 export function AcousticMonitorCard() {
-  const { coughFrequency, wheezing, breathingRate } = acousticData.today;
+  const { coughFrequency, wheezing, breathingRate } = useMemo(() => {
+    const randomIndex = Math.floor(Math.random() * acousticData.history.length);
+    return acousticData.history[randomIndex];
+  }, []);
 
   const [isRecording, setIsRecording] = useState(false);
   const [analysis, setAnalysis] = useState("");

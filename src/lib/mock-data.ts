@@ -21,18 +21,25 @@ export const riskScores: { today: number; history: RiskScoreHistory[] } = {
   })),
 };
 
-export const acousticData: { today: AcousticData; history: AcousticData[] } = {
-  today: {
-    coughFrequency: 18,
-    wheezing: true,
-    breathingRate: 22,
-  },
-  history: dates.map((date, i) => ({
-    date,
-    coughFrequency: Math.floor(Math.random() * 8) + 10 - i,
-    wheezing: i > 4,
-    breathingRate: Math.floor(Math.random() * 3) + 18,
-  })),
+const generateAcousticHistory = (count: number): AcousticData[] => {
+    const history: AcousticData[] = [];
+    for (let i = 0; i < count; i++) {
+        const date = new Date(today);
+        date.setDate(today.getDate() - (count - 1 - i));
+        history.push({
+            date: date.toISOString().split('T')[0],
+            coughFrequency: Math.floor(Math.random() * 25) + 5, // Random frequency between 5 and 30
+            wheezing: Math.random() > 0.7, // 30% chance of wheezing
+            breathingRate: Math.floor(Math.random() * 8) + 16, // Random rate between 16 and 24
+        });
+    }
+    return history;
+}
+
+const acousticHistory50 = generateAcousticHistory(50);
+
+export const acousticData: { history: AcousticData[] } = {
+  history: acousticHistory50,
 };
 
 export const environmentalData: { today: EnvironmentalData; history: EnvironmentalData[] } = {

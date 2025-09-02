@@ -16,7 +16,7 @@ import { DailyData } from "@/lib/types"
 const chartData: DailyData[] = riskScores.history.map((rs, index) => ({
   date: rs.date,
   riskScore: rs.score,
-  coughFrequency: acousticData.history[index]?.coughFrequency,
+  coughFrequency: acousticData.history[index % acousticData.history.length]?.coughFrequency,
   aqi: environmentalData.history[index]?.aqi,
 }));
 
@@ -60,10 +60,10 @@ export function DataCharts() {
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
-                tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
+                tickFormatter={(value) => new Date(value).toLocaleString('en-US', { day: 'numeric', month: 'short' })}
               />
               <YAxis yAxisId="left" domain={[0, 180]} hide />
-              <YAxis yAxisId="right" orientation="right" domain={[0, 25]} hide />
+              <YAxis yAxisId="right" orientation="right" domain={[0, 35]} hide />
               <ChartTooltip
                 cursor={true}
                 content={<ChartTooltipContent indicator="line" />}
