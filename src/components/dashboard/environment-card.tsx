@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Wind, Leaf, Loader2, AlertTriangle } from "lucide-react";
-import { getEnvironmentalData } from "@/ai/flows/get-environmental-data";
+import { fetchWeatherData } from "@/ai/tools/weather";
 import type { EnvironmentalData } from "@/lib/types";
 
 type EnvironmentCardProps = {
@@ -28,7 +28,7 @@ export function EnvironmentCard({ onDataFetched, onLoadingChange }: EnvironmentC
       try {
         // Simulate getting user's location. In a real app, you'd use navigator.geolocation
         const mockLocation = { latitude: 37.4419, longitude: -122.1430 };
-        const result = await getEnvironmentalData(mockLocation);
+        const result = await fetchWeatherData(mockLocation.latitude, mockLocation.longitude);
         const fetchedData = {
           location: result.locationName,
           aqi: result.aqi,
@@ -46,6 +46,7 @@ export function EnvironmentCard({ onDataFetched, onLoadingChange }: EnvironmentC
     };
 
     fetchEnvData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onDataFetched]);
 
   const getAqiColor = (value: number) => {

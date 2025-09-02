@@ -5,7 +5,7 @@ import { z } from 'zod';
 
 // Mock function to simulate fetching weather data.
 // In a real application, this would call a weather API.
-const fetchWeatherData = async (latitude: number, longitude: number) => {
+export const fetchWeatherData = async (latitude: number, longitude: number) => {
   // Simulate API call delay
   await new Promise(resolve => setTimeout(resolve, 500));
 
