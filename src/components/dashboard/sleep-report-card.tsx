@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Bed, BarChart, Loader2, Sparkles, Moon } from "lucide-react";
 import type { AcousticData, SleepReport } from "@/lib/types";
+import { useToast } from "@/hooks/use-toast";
 
 // Mock implementation to avoid API rate limits during development.
 const generateMockSleepReport = (acousticData: AcousticData): SleepReport => {
@@ -43,6 +44,7 @@ type SleepReportCardProps = {
 export function SleepReportCard({ acousticData, onReportGenerated }: SleepReportCardProps) {
   const [report, setReport] = useState<SleepReport | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
   
   const handleGenerateReport = async () => {
     if (!acousticData) return;
@@ -58,6 +60,15 @@ export function SleepReportCard({ acousticData, onReportGenerated }: SleepReport
       const result = generateMockSleepReport(acousticData);
       setReport(result);
       onReportGenerated(result);
+
+      if (result.sleepScore < 20) {
+        toast({
+          title: "Poor Sleep Quality Detected",
+          description: "Your sleep score is very low. Please remember to take your medicine and use your inhaler as prescribed.",
+          variant: "destructive",
+        });
+      }
+
     } catch (error) {
       console.error("Error generating mock sleep report:", error);
       const errorReport = {
