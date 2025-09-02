@@ -109,8 +109,8 @@ export function EnvironmentCard({ onDataFetched, onLoadingChange }: EnvironmentC
              <p className="text-sm text-destructive">{error}</p>
           </div>
         ) : data ? (
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex items-center justify-between col-span-2">
+          <div className="grid grid-cols-1 gap-4">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="bg-secondary p-2 rounded-md">
                   <Leaf className="h-5 w-5 text-secondary-foreground" />
