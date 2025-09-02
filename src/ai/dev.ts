@@ -10,3 +10,4 @@ import '@/ai/flows/calculate-risk-score.ts';
 import '@/ai/flows/get-environmental-data.ts';
 import '@/ai/flows/chat-with-doctor.ts';
 import '@/ai/tools/weather.ts';
+import '@/ai/flows/predict-future-risk.ts';

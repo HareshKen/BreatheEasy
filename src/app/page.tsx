@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -13,6 +12,8 @@ import { SleepReportCard } from '@/components/dashboard/sleep-report-card';
 import { useToast } from '@/hooks/use-toast';
 import { SymptomLoggerCard } from '@/components/dashboard/symptom-logger-card';
 import { SleepMonitorCard } from '@/components/dashboard/sleep-monitor-card';
+import { FutureRiskCard } from '@/components/dashboard/future-risk-card';
+import { riskScores } from '@/lib/mock-data';
 
 // Mock implementation to avoid API rate limits during development.
 const calculateMockRiskScore = (logs: SymptomLog[]): { riskScore: number; explanation: string } => {
@@ -135,7 +136,7 @@ export default function DashboardPage() {
            <div className="col-span-1 md:col-span-2 lg:col-span-4">
             <SymptomLoggerCard addSymptomLog={addSymptomLog} logs={symptomLogs} />
           </div>
-          <div className="lg:col-span-3 md:col-span-2">
+          <div className="lg:col-span-2 md:col-span-2">
             <AiCards 
               riskScore={currentRiskScore}
               symptomLogs={symptomLogs}
@@ -144,12 +145,15 @@ export default function DashboardPage() {
               sleepReport={sleepReport}
             />
           </div>
-          <div className="lg:col-span-1 md:col-span-2">
+           <div className="lg:col-span-1 md:col-span-2">
             <RiskScore 
               score={currentRiskScore} 
               explanation={riskScoreExplanation} 
               isLoading={isCalculatingScore} 
             />
+          </div>
+          <div className="lg:col-span-1 md:col-span-2">
+             <FutureRiskCard historicalRiskScores={riskScores.history} />
           </div>
           <div className="col-span-1 md:col-span-2 lg:col-span-4">
             <DataCharts 
