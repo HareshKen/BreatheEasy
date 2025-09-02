@@ -12,6 +12,7 @@ import { EnvironmentCard } from '@/components/dashboard/environment-card';
 import { SleepReportCard } from '@/components/dashboard/sleep-report-card';
 import { useToast } from '@/hooks/use-toast';
 import { SymptomLoggerCard } from '@/components/dashboard/symptom-logger-card';
+import { SleepMonitorCard } from '@/components/dashboard/sleep-monitor-card';
 
 // Mock implementation to avoid API rate limits during development.
 const calculateMockRiskScore = (logs: SymptomLog[]): { riskScore: number; explanation: string } => {
@@ -124,6 +125,9 @@ export default function DashboardPage() {
           </div>
           <div className="col-span-1 md:col-span-1 lg:col-span-2">
             <EnvironmentCard onDataFetched={setEnvironmentalData} onLoadingChange={setIsFetchingAqi} />
+          </div>
+          <div className="col-span-1 md:col-span-2 lg:col-span-4">
+            <SleepMonitorCard />
           </div>
           <div className="col-span-1 md:col-span-2 lg:col-span-4">
             <SleepReportCard acousticData={acousticData} onReportGenerated={setSleepReport} />
