@@ -13,12 +13,12 @@ import { SleepReportCard } from '@/components/dashboard/sleep-report-card';
 import { SymptomHistoryCard } from '@/components/dashboard/symptom-history-card';
 import { useToast } from '@/hooks/use-toast';
 import { calculateRiskScore } from '@/ai/flows/calculate-risk-score';
-import { acousticData, environmentalData, riskScores } from '@/lib/mock-data';
+import { acousticData, environmentalData } from '@/lib/mock-data';
 
 export default function DashboardPage() {
   const [symptomLogs, setSymptomLogs] = useState<SymptomLog[]>([]);
-  const [currentRiskScore, setCurrentRiskScore] = useState(riskScores.today);
-  const [riskScoreExplanation, setRiskScoreExplanation] = useState<string | null>('Based on recent data');
+  const [currentRiskScore, setCurrentRiskScore] = useState(0);
+  const [riskScoreExplanation, setRiskScoreExplanation] = useState<string | null>('Please log symptoms to see your Exacerbation Risk Score');
   const [isCalculatingScore, setIsCalculatingScore] = useState(false);
   const { toast } = useToast();
 
@@ -26,17 +26,17 @@ export default function DashboardPage() {
     const newLogs = [...symptomLogs, { ...log, dateTime: new Date() }];
     setSymptomLogs(newLogs);
 
-    if (newLogs.length >= 3) {
+    if (newLogs.length === 3) {
       setIsCalculatingScore(true);
-      setRiskScoreExplanation('Recalculating score based on new symptom data...');
+      setRiskScoreExplanation('Calculating score based on your first 3 symptom logs...');
       toast({
         title: "Analyzing Symptoms",
-        description: "You've logged 3 symptoms. We're recalculating your risk score.",
+        description: "You've logged your first 3 symptoms. We're calculating your initial risk score.",
       });
 
       try {
         const result = await calculateRiskScore({
-          symptomLogs: JSON.stringify(newLogs.slice(-3)), // Send last 3 logs
+          symptomLogs: JSON.stringify(newLogs),
           acousticData: JSON.stringify(acousticData.today),
           environmentalData: JSON.stringify(environmentalData.today),
         });
@@ -46,13 +46,16 @@ export default function DashboardPage() {
         console.error("Error calculating risk score:", error);
         toast({
           title: "Error",
-          description: "Could not recalculate risk score at this time.",
+          description: "Could not calculate risk score at this time.",
           variant: "destructive",
         });
-        setRiskScoreExplanation('Could not update score.');
+        setRiskScoreExplanation('Could not calculate score. Please try again.');
       } finally {
         setIsCalculatingScore(false);
       }
+    } else if (newLogs.length > 3) {
+      // Optional: decide if you want to recalculate on every new log after 3.
+      // For now, we only calculate on the first 3.
     }
   };
 
