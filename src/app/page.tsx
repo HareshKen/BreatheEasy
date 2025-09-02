@@ -14,6 +14,7 @@ import { SymptomHistoryCard } from '@/components/dashboard/symptom-history-card'
 import { useToast } from '@/hooks/use-toast';
 import { calculateRiskScore } from '@/ai/flows/calculate-risk-score';
 import type { EnvironmentalData } from '@/lib/types';
+import { SymptomLoggerCard } from '@/components/dashboard/symptom-logger-card';
 
 export default function DashboardPage() {
   const [symptomLogs, setSymptomLogs] = useState<SymptomLog[]>([]);
@@ -61,7 +62,7 @@ export default function DashboardPage() {
 
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <Header addSymptomLog={addSymptomLog} />
+      <Header />
       <main className="flex-1 p-4 sm:p-6 md:p-8">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
           <div className="col-span-1 md:col-span-1 lg:col-span-2">
@@ -69,6 +70,9 @@ export default function DashboardPage() {
           </div>
           <div className="col-span-1 md:col-span-1 lg:col-span-2">
             <EnvironmentCard onDataFetched={setEnvironmentalData} onLoadingChange={setIsFetchingAqi} />
+          </div>
+          <div className="col-span-1 md:col-span-2 lg:col-span-4">
+            <SymptomLoggerCard addSymptomLog={addSymptomLog} />
           </div>
           <div className="col-span-1 md:col-span-2 lg:col-span-4">
             <SleepReportCard />
@@ -90,7 +94,7 @@ export default function DashboardPage() {
             <DataCharts 
               riskScore={currentRiskScore}
               aqi={environmentalData?.aqi}
-              isLoading={isFetchingAqi}
+              isLoading={isFetchingAqi || (symptomLogs.length >= 3 && isCalculatingScore)}
             />
           </div>
         </div>
