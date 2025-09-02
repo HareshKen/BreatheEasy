@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { Goal, SymptomLog, SleepReport } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -43,11 +43,59 @@ const getInhalerUsageLast7Days = (logs: SymptomLog[]): number => {
     .reduce((sum, log) => sum + log.inhalerUsage, 0);
 };
 
+const calculateProgressValue = (goal: Goal, symptomLogs: SymptomLog[], sleepReport: SleepReport | null): number => {
+    if (goal.type === 'inhalerUsage') {
+        const currentUsage = getInhalerUsageLast7Days(symptomLogs);
+        // If current is 2 and target is 5, progress is how close you are to the target
+        // We want usage <= target. Progress is 100 if we meet it.
+        if (currentUsage <= goal.targetValue) return 100;
+        // If not met, show how far off we are. Let's show 0 if not met for simplicity.
+        // A more complex progress could be `100 * (initialUsage - currentUsage) / (initialUsage - target)`
+        // For now, it's binary: 0% or 100%
+        return 0; // Or a more granular progress. For this goal, 100% when met is clear.
+    }
+    if (goal.type === 'sleepScore') {
+        const currentScore = sleepReport?.sleepScore ?? 0;
+        return Math.min(100, (currentScore / goal.targetValue) * 100);
+    }
+    return 0;
+};
+
+
 export function GoalsCard({ goals, addGoal, symptomLogs, sleepReport, isInSheet = false }: GoalsCardProps) {
   const [open, setOpen] = useState(false);
   const [goalType, setGoalType] = useState<Goal['type'] | ''>('');
   const [targetValue, setTargetValue] = useState('0');
   const { toast } = useToast();
+  const previouslyAchievedGoals = useRef<Set<number>>(new Set());
+
+  useEffect(() => {
+    const newlyAchievedGoals: Goal[] = [];
+    
+    goals.forEach(goal => {
+        const progress = calculateProgressValue(goal, symptomLogs, sleepReport);
+        const isAchieved = progress >= 100;
+
+        if (isAchieved && !previouslyAchievedGoals.current.has(goal.id)) {
+            newlyAchievedGoals.push(goal);
+            previouslyAchievedGoals.current.add(goal.id);
+        } else if (!isAchieved && previouslyAchievedGoals.current.has(goal.id)) {
+            // Optional: allow re-triggering if a goal becomes un-achieved and then achieved again
+            previouslyAchievedGoals.current.delete(goal.id);
+        }
+    });
+
+    if (newlyAchievedGoals.length > 0) {
+        newlyAchievedGoals.forEach(goal => {
+            toast({
+                title: "Goal Achieved!",
+                description: `Yay! You achieved your goal: "${goal.title}"`,
+                className: 'bg-accent text-accent-foreground border-accent',
+            });
+        });
+    }
+  }, [goals, symptomLogs, sleepReport, toast]);
+
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -74,7 +122,7 @@ export function GoalsCard({ goals, addGoal, symptomLogs, sleepReport, isInSheet 
     let description = '';
     if (goalType === 'inhalerUsage') {
         title = `Reduce Inhaler Use`;
-        description = `Target: Less than ${target} times per week`;
+        description = `Target: ${target} or less times per week`;
     } else if (goalType === 'sleepScore') {
         title = `Improve Sleep Score`;
         description = `Target: Score above ${target}`;
@@ -93,19 +141,19 @@ export function GoalsCard({ goals, addGoal, symptomLogs, sleepReport, isInSheet 
     setOpen(false);
   };
   
-  const calculateProgress = (goal: Goal): { progress: number; progressText: string, icon: React.ReactNode } => {
+  const calculateProgressDisplay = (goal: Goal): { progress: number; progressText: string, icon: React.ReactNode } => {
     if (goal.type === 'inhalerUsage') {
         const currentUsage = getInhalerUsageLast7Days(symptomLogs);
-        // Progress is how close you are to 0 from your starting point (the target)
-        // If current is 2 and target is 5, you are 3 steps closer to 0, so 3/5 = 60%
-        const progress = Math.max(0, 100 * (1 - (currentUsage / goal.targetValue)));
-        const icon = currentUsage < goal.targetValue ? <TrendingDown className="text-accent" /> : <TrendingUp className="text-destructive" />;
+        const isAchieved = currentUsage <= goal.targetValue;
+        const progress = isAchieved ? 100 : ( (goal.targetValue / (currentUsage === 0 ? 1 : currentUsage) ) * 100);
+        const icon = isAchieved ? <Award className="text-accent" /> : (currentUsage > goal.targetValue ? <TrendingUp className="text-destructive" /> : <TrendingDown className="text-accent" />);
         return { progress, progressText: `${currentUsage}/${goal.targetValue} times used`, icon };
     }
     if (goal.type === 'sleepScore') {
         const currentScore = sleepReport?.sleepScore ?? 0;
         const progress = Math.min(100, (currentScore / goal.targetValue) * 100);
-        const icon = currentScore >= goal.targetValue ? <Award className="text-accent" /> : <TrendingUp className="text-yellow-500" />;
+        const isAchieved = currentScore >= goal.targetValue;
+        const icon = isAchieved ? <Award className="text-accent" /> : <TrendingUp className="text-yellow-500" />;
         return { progress, progressText: `${currentScore}/${goal.targetValue} score`, icon };
     }
     return { progress: 0, progressText: 'N/A', icon: null };
@@ -116,7 +164,7 @@ export function GoalsCard({ goals, addGoal, symptomLogs, sleepReport, isInSheet 
         {goals.length > 0 ? (
           <div className="space-y-6">
             {goals.map((goal) => {
-              const { progress, progressText, icon } = calculateProgress(goal);
+              const { progress, progressText, icon } = calculateProgressDisplay(goal);
               return (
                 <div key={goal.id} className="space-y-2">
                     <div className="flex items-center justify-between">
