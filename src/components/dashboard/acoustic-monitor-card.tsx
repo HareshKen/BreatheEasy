@@ -6,11 +6,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Ear, Waves, HeartPulse, Lightbulb, Mic, Square, Loader2, TestTube, ListTree } from "lucide-react";
-import { acousticData } from "@/lib/mock-data";
+import { acousticData as mockAcousticData } from "@/lib/mock-data";
 import { analyzeCough } from "@/ai/flows/analyze-cough";
 import type { AcousticData, AnalyzeCoughOutput } from "@/lib/types";
 
-export function AcousticMonitorCard() {
+type AcousticMonitorCardProps = {
+  onDataLoaded: (data: AcousticData | null) => void;
+};
+
+export function AcousticMonitorCard({ onDataLoaded }: AcousticMonitorCardProps) {
   const [displayData, setDisplayData] = useState<AcousticData | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [analysis, setAnalysis] = useState<AnalyzeCoughOutput | null>(null);
@@ -20,8 +24,11 @@ export function AcousticMonitorCard() {
   const audioChunksRef = useRef<Blob[]>([]);
 
   useEffect(() => {
-    setDisplayData(acousticData.today);
-  }, []);
+    // This now runs only on the client
+    const todayData = mockAcousticData.today;
+    setDisplayData(todayData);
+    onDataLoaded(todayData);
+  }, [onDataLoaded]);
 
   const handleStartRecording = async () => {
     setAnalysis(null);

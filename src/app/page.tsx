@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { SymptomLog } from '@/lib/types';
+import type { SymptomLog, AcousticData, SleepReport, EnvironmentalData } from '@/lib/types';
 import { Header } from '@/components/dashboard/header';
 import { RiskScore } from '@/components/dashboard/risk-score';
 import { AiCards } from '@/components/dashboard/ai-cards';
@@ -13,7 +13,6 @@ import { SleepReportCard } from '@/components/dashboard/sleep-report-card';
 import { SymptomHistoryCard } from '@/components/dashboard/symptom-history-card';
 import { useToast } from '@/hooks/use-toast';
 import { calculateRiskScore } from '@/ai/flows/calculate-risk-score';
-import type { EnvironmentalData } from '@/lib/types';
 import { SymptomLoggerCard } from '@/components/dashboard/symptom-logger-card';
 
 export default function DashboardPage() {
@@ -24,6 +23,8 @@ export default function DashboardPage() {
   const [environmentalData, setEnvironmentalData] = useState<EnvironmentalData | null>(null);
   const [isFetchingAqi, setIsFetchingAqi] = useState(true);
   const { toast } = useToast();
+  const [acousticData, setAcousticData] = useState<AcousticData | null>(null);
+  const [sleepReport, setSleepReport] = useState<SleepReport | null>(null);
 
   const addSymptomLog = async (log: Omit<SymptomLog, 'dateTime'>) => {
     const newLogs = [...symptomLogs, { ...log, dateTime: new Date() }];
@@ -66,7 +67,7 @@ export default function DashboardPage() {
       <main className="flex-1 p-4 sm:p-6 md:p-8">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
           <div className="col-span-1 md:col-span-1 lg:col-span-2">
-            <AcousticMonitorCard />
+            <AcousticMonitorCard onDataLoaded={setAcousticData} />
           </div>
           <div className="col-span-1 md:col-span-1 lg:col-span-2">
             <EnvironmentCard onDataFetched={setEnvironmentalData} onLoadingChange={setIsFetchingAqi} />
@@ -75,13 +76,19 @@ export default function DashboardPage() {
             <SymptomLoggerCard addSymptomLog={addSymptomLog} />
           </div>
           <div className="col-span-1 md:col-span-2 lg:col-span-4">
-            <SleepReportCard />
+            <SleepReportCard acousticData={acousticData} onReportGenerated={setSleepReport} />
           </div>
           <div className="col-span-1 md:col-span-2 lg:col-span-4">
             <SymptomHistoryCard logs={symptomLogs} />
           </div>
           <div className="lg:col-span-3 md:col-span-2">
-            <AiCards />
+            <AiCards 
+              riskScore={currentRiskScore}
+              symptomLogs={symptomLogs}
+              acousticData={acousticData}
+              environmentalData={environmentalData}
+              sleepReport={sleepReport}
+            />
           </div>
           <div className="lg:col-span-1 md:col-span-2">
             <RiskScore 

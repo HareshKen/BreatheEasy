@@ -1,3 +1,4 @@
+
 export interface RiskScoreHistory {
   date: string;
   score: number;
@@ -34,4 +35,9 @@ export interface AnalyzeCoughOutput {
   coughType: 'Productive' | 'Non-productive' | 'Uncertain';
   characteristics: string;
   summary: string;
+}
+
+export interface SleepReport {
+  sleepScore: number;
+  nightInsight: string;
 }

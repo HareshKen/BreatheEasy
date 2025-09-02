@@ -5,36 +5,39 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Bed, BarChart, Loader2, Sparkles, Moon } from "lucide-react";
-import { acousticData } from "@/lib/mock-data";
 import { analyzeSleepData } from "@/ai/flows/analyze-sleep-data";
-import type { AcousticData } from "@/lib/types";
+import type { AcousticData, SleepReport } from "@/lib/types";
 
-type SleepReport = {
-  sleepScore: number;
-  nightInsight: string;
+type SleepReportCardProps = {
+  acousticData: AcousticData | null;
+  onReportGenerated: (report: SleepReport | null) => void;
 };
 
-export function SleepReportCard() {
+export function SleepReportCard({ acousticData, onReportGenerated }: SleepReportCardProps) {
   const [report, setReport] = useState<SleepReport | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   
-  // Use the same consistent data for "today" as the acoustic monitor card.
-  const nightlyData = acousticData.today;
-
   const handleGenerateReport = async () => {
+    if (!acousticData) return;
+    
     setIsLoading(true);
     setReport(null);
+    onReportGenerated(null);
+
     try {
       const result = await analyzeSleepData({
-        nightlyAcousticData: JSON.stringify(nightlyData),
+        nightlyAcousticData: JSON.stringify(acousticData),
       });
       setReport(result);
+      onReportGenerated(result);
     } catch (error) {
       console.error("Error generating sleep report:", error);
-      setReport({
+      const errorReport = {
         sleepScore: 0,
         nightInsight: "Could not generate a report at this time. Please try again later.",
-      });
+      };
+      setReport(errorReport);
+      onReportGenerated(errorReport);
     } finally {
       setIsLoading(false);
     }
@@ -49,7 +52,7 @@ export function SleepReportCard() {
       <CardContent className="grid gap-6">
         {!report && (
            <div className="flex flex-col items-start gap-4">
-             <Button onClick={handleGenerateReport} disabled={isLoading}>
+             <Button onClick={handleGenerateReport} disabled={isLoading || !acousticData}>
                 {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2" />}
                 Analyze Last Night
             </Button>

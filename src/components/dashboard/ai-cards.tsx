@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -7,9 +8,18 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Lightbulb, Sparkles, Loader2 } from "lucide-react";
-import { acousticData, environmentalData, riskScores } from "@/lib/mock-data";
+import { acousticData as mockAcousticData, environmentalData as mockEnvironmentalData, riskScores as mockRiskScores } from "@/lib/mock-data";
+import type { SymptomLog, AcousticData, EnvironmentalData, SleepReport } from "@/lib/types";
 
-export function AiCards() {
+type AiCardsProps = {
+  riskScore: number;
+  symptomLogs: SymptomLog[];
+  acousticData: AcousticData | null;
+  environmentalData: EnvironmentalData | null;
+  sleepReport: SleepReport | null;
+};
+
+export function AiCards({ riskScore, symptomLogs, acousticData, environmentalData, sleepReport }: AiCardsProps) {
   const [insights, setInsights] = useState("");
   const [recommendations, setRecommendations] = useState("");
   const [isLoadingInsights, setIsLoadingInsights] = useState(false);
@@ -20,9 +30,9 @@ export function AiCards() {
     setInsights("");
     try {
       const result = await generateDataInsights({
-        acousticData: JSON.stringify(acousticData.history),
-        environmentalFactors: JSON.stringify(environmentalData.history),
-        riskScores: JSON.stringify(riskScores.history),
+        acousticData: JSON.stringify(acousticData ?? mockAcousticData.history[mockAcousticData.history.length - 1]),
+        environmentalFactors: JSON.stringify(environmentalData ?? mockEnvironmentalData.history[mockEnvironmentalData.history.length - 1]),
+        riskScores: JSON.stringify({ today: riskScore, history: mockRiskScores.history }),
       });
       setInsights(result.insights);
     } catch (error) {
@@ -37,11 +47,16 @@ export function AiCards() {
     setIsLoadingRecs(true);
     setRecommendations("");
     try {
+      // Use live data if available, otherwise fall back to the most recent mock data.
+      const currentAcoustic = acousticData ?? mockAcousticData.history[mockAcousticData.history.length - 1];
+      const currentEnv = environmentalData ?? mockEnvironmentalData.history[mockEnvironmentalData.history.length - 1];
+      const lastSymptom = symptomLogs.length > 0 ? symptomLogs[symptomLogs.length - 1] : { phlegmColor: 'N/A', inhalerUsage: 'N/A' };
+
       const result = await personalizedActionRecommendations({
-        exacerbationRiskScore: riskScores.today,
-        acousticDataTrends: "Slight increase in nocturnal cough frequency.",
-        environmentalFactors: `AQI: ${environmentalData.today.aqi}, Pollen: ${environmentalData.today.pollen}.`,
-        symptomData: "User reported yellow phlegm and used inhaler twice today.",
+        exacerbationRiskScore: riskScore,
+        acousticDataTrends: `Cough Freq: ${currentAcoustic.coughFrequency}/hr, Wheezing: ${currentAcoustic.wheezing ? 'Yes' : 'No'}, Breathing: ${currentAcoustic.breathingRate}bpm.`,
+        environmentalFactors: `AQI: ${currentEnv.aqi}, Pollen: ${currentEnv.pollen}.`,
+        symptomData: `Last log: Phlegm was ${lastSymptom.phlegmColor}, Inhaler used ${lastSymptom.inhalerUsage} times.`,
       });
       setRecommendations(result.recommendedActions);
     } catch (error) {
