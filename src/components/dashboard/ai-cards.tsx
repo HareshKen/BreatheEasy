@@ -2,12 +2,12 @@
 "use client";
 
 import { useState } from "react";
-import { personalizedActionRecommendations } from "@/ai/flows/personalized-action-recommendations";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Lightbulb, Sparkles, Loader2 } from "lucide-react";
-import type { SymptomLog, AcousticData, EnvironmentalData, SleepReport } from "@/lib/types";
+import { Lightbulb, Sparkles, Loader2, Bot } from "lucide-react";
+import type { SymptomLog, AcousticData, EnvironmentalData, SleepReport, ChatMessage, HealthData } from "@/lib/types";
+import { DoctorChatbot } from "./doctor-chatbot";
 
 type AiCardsProps = {
   riskScore: number;
@@ -56,7 +56,7 @@ export function AiCards({ riskScore, symptomLogs, acousticData, environmentalDat
       <Tabs defaultValue="insights" className="flex flex-col h-full">
         <CardHeader>
           <CardTitle>AI Assistant</CardTitle>
-          <TabsList className="grid w-full grid-cols-2 mt-2">
+          <TabsList className="grid w-full grid-cols-3 mt-2">
             <TabsTrigger value="insights">
               <Lightbulb className="mr-2" />
               Insights
@@ -64,6 +64,10 @@ export function AiCards({ riskScore, symptomLogs, acousticData, environmentalDat
             <TabsTrigger value="recommendations">
               <Sparkles className="mr-2" />
               Recommendations
+            </TabsTrigger>
+             <TabsTrigger value="chatbot">
+              <Bot className="mr-2" />
+              Chat
             </TabsTrigger>
           </TabsList>
         </CardHeader>
@@ -101,6 +105,14 @@ export function AiCards({ riskScore, symptomLogs, acousticData, environmentalDat
               {isLoadingRecs && <p className="text-sm text-muted-foreground">Generating recommendations...</p>}
               {recommendations && <div className="prose prose-sm max-w-none text-foreground whitespace-pre-wrap">{recommendations}</div>}
             </div>
+          </TabsContent>
+           <TabsContent value="chatbot" className="mt-0 h-full">
+            <DoctorChatbot 
+               riskScore={riskScore}
+               acousticData={acousticData}
+               environmentalData={environmentalData}
+               sleepReport={sleepReport}
+            />
           </TabsContent>
         </CardContent>
       </Tabs>

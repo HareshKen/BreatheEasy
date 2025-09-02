@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { SymptomLog, AcousticData, SleepReport, EnvironmentalData } from '@/lib/types';
+import type { SymptomLog, AcousticData, SleepReport, EnvironmentalData, Goal } from '@/lib/types';
 import { Header } from '@/components/dashboard/header';
 import { RiskScore } from '@/components/dashboard/risk-score';
 import { AiCards } from '@/components/dashboard/ai-cards';
@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { SymptomLoggerCard } from '@/components/dashboard/symptom-logger-card';
 import { SleepMonitorCard } from '@/components/dashboard/sleep-monitor-card';
 import { FutureRiskCard } from '@/components/dashboard/future-risk-card';
+import { GoalsCard } from '@/components/dashboard/goals-card';
 import { riskScores } from '@/lib/mock-data';
 
 // Mock implementation to avoid API rate limits during development.
@@ -82,6 +83,7 @@ export default function DashboardPage() {
   const { toast } = useToast();
   const [acousticData, setAcousticData] = useState<AcousticData | null>(null);
   const [sleepReport, setSleepReport] = useState<SleepReport | null>(null);
+  const [goals, setGoals] = useState<Goal[]>([]);
 
   const addSymptomLog = async (log: Omit<SymptomLog, 'dateTime'>) => {
     const newLogs = [...symptomLogs, { ...log, dateTime: new Date() }];
@@ -115,6 +117,14 @@ export default function DashboardPage() {
       setIsCalculatingScore(false);
     }
   };
+  
+  const addGoal = (goal: Goal) => {
+    setGoals(prevGoals => [...prevGoals, goal]);
+     toast({
+      title: "Goal Set!",
+      description: `New goal "${goal.title}" has been added.`,
+    });
+  }
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-background text-foreground">
@@ -137,29 +147,37 @@ export default function DashboardPage() {
             <SymptomLoggerCard addSymptomLog={addSymptomLog} logs={symptomLogs} />
           </div>
           <div className="lg:col-span-2 md:col-span-2">
-            <AiCards 
-              riskScore={currentRiskScore}
-              symptomLogs={symptomLogs}
-              acousticData={acousticData}
-              environmentalData={environmentalData}
-              sleepReport={sleepReport}
-            />
-          </div>
-           <div className="lg:col-span-1 md:col-span-2">
             <RiskScore 
               score={currentRiskScore} 
               explanation={riskScoreExplanation} 
               isLoading={isCalculatingScore} 
             />
           </div>
-          <div className="lg:col-span-1 md:col-span-2">
-             <FutureRiskCard historicalRiskScores={riskScores.history} />
+           <div className="lg:col-span-2 md:col-span-2">
+            <FutureRiskCard historicalRiskScores={riskScores.history} />
+          </div>
+          <div className="col-span-1 md:col-span-2 lg:col-span-4">
+            <GoalsCard 
+              goals={goals} 
+              addGoal={addGoal} 
+              symptomLogs={symptomLogs} 
+              sleepReport={sleepReport} 
+            />
           </div>
           <div className="col-span-1 md:col-span-2 lg:col-span-4">
             <DataCharts 
               riskScore={currentRiskScore}
               aqi={environmentalData?.aqi}
               isLoading={isFetchingAqi || (symptomLogs.length >= 1 && isCalculatingScore)}
+            />
+          </div>
+          <div className="col-span-1 md:col-span-2 lg:col-span-4">
+            <AiCards 
+              riskScore={currentRiskScore}
+              symptomLogs={symptomLogs}
+              acousticData={acousticData}
+              environmentalData={environmentalData}
+              sleepReport={sleepReport}
             />
           </div>
         </div>

@@ -62,3 +62,11 @@ export const HealthDataSchema = z.object({
   sleepQualityScore: z.number().optional().describe('The sleep quality score from the last report (0-100).'),
 });
 export type HealthData = z.infer<typeof HealthDataSchema>;
+
+export interface Goal {
+  id: number;
+  type: 'inhalerUsage' | 'sleepScore';
+  title: string;
+  description: string;
+  targetValue: number;
+}

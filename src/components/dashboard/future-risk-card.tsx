@@ -10,27 +10,52 @@ import { useToast } from "@/hooks/use-toast";
 
 // This is a mock implementation to avoid hitting API rate limits during development.
 const generateMockFutureRisk = (historicalScores: RiskScoreHistory[]): { predictedRiskScore: number; proactiveAlert: string } => {
-  const lastScore = historicalScores.length > 0 ? historicalScores[historicalScores.length - 1].score : 50;
-  
+  if (historicalScores.length === 0) {
+    return {
+      predictedRiskScore: 25,
+      proactiveAlert: "Not enough data for a prediction. Log your symptoms to get started.",
+    };
+  }
+
+  const lastScore = historicalScores[historicalScores.length - 1].score;
+  const averageScore = historicalScores.reduce((acc, curr) => acc + curr.score, 0) / historicalScores.length;
+  const trend = lastScore - averageScore;
+
   // Simulate environmental forecast
   const mockForecast = {
     pollen: Math.random() > 0.5 ? 'High' : 'Low',
-    aqi: Math.floor(Math.random() * 100) + 50,
+    aqi: Math.floor(Math.random() * 70) + 30, // Skew towards better AQI
   };
 
-  let predictedScore = lastScore + (Math.random() * 20 - 10); // Fluctuate around the last score
-  let proactiveAlert = "The forecast looks good for the next couple of days. Continue your current routine and enjoy the clear air!";
+  let predictedScore = averageScore;
+  let proactiveAlert = "";
 
-  if (mockForecast.pollen === 'High' || mockForecast.aqi > 100) {
-    predictedScore += Math.random() * 20; // Increase score if forecast is bad
-    proactiveAlert = `A high ${mockForecast.pollen === 'High' ? 'pollen count' : 'AQI'} is forecasted tomorrow. Remember to take your controller medication and consider staying indoors.`;
+  // Adjust based on trend
+  if (trend > 5) {
+    predictedScore += 10; // Increasing risk trend
+    proactiveAlert = "Your risk has been trending upwards. Be extra mindful of your symptoms over the next couple of days.";
+  } else if (trend < -5) {
+    predictedScore -= 10; // Decreasing risk trend
+    proactiveAlert = "Your risk has been trending down. Keep up the great work with your management routine!";
+  } else {
+    proactiveAlert = "Your risk score is stable. Continue your current routine and enjoy the clear air!";
+  }
+
+  // Adjust based on forecast
+  if (mockForecast.pollen === 'High') {
+    predictedScore += 15;
+    proactiveAlert += " High pollen is forecasted tomorrow, which may increase your risk. Consider limiting outdoor time.";
+  }
+  if (mockForecast.aqi > 80) {
+    predictedScore += 10;
+    proactiveAlert += " The AQI is expected to be high. It's a good idea to stay indoors if possible.";
   }
 
   predictedScore = Math.min(100, Math.max(0, Math.round(predictedScore)));
 
   return {
     predictedRiskScore: predictedScore,
-    proactiveAlert: proactiveAlert,
+    proactiveAlert: proactiveAlert.trim(),
   };
 };
 
@@ -47,7 +72,6 @@ export function FutureRiskCard({ historicalRiskScores }: FutureRiskCardProps) {
     setIsLoading(true);
     setPrediction(null);
     
-    // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     try {
@@ -65,11 +89,17 @@ export function FutureRiskCard({ historicalRiskScores }: FutureRiskCardProps) {
     }
   };
   
-  const getScoreColor = (score: number) => {
+  const getScoreColorClass = (score: number) => {
     if (score <= 33) return "text-accent";
     if (score <= 66) return "text-yellow-500";
     return "text-destructive";
   };
+
+  const getBorderColorClass = (score: number) => {
+    if (score <= 33) return "border-accent";
+    if (score <= 66) return "border-yellow-500";
+    return "border-destructive";
+  }
 
   return (
     <Card className="h-full flex flex-col">
@@ -91,12 +121,12 @@ export function FutureRiskCard({ historicalRiskScores }: FutureRiskCardProps) {
 
         {prediction && (
           <div className="w-full space-y-4">
-             <div className="text-6xl font-bold" style={{ color: getScoreColor(prediction.score) }}>
+             <div className={`text-6xl font-bold ${getScoreColorClass(prediction.score)}`}>
               {prediction.score}
             </div>
             <p className="text-muted-foreground">Predicted Risk Score</p>
-             <Alert className={`${getScoreColor(prediction.score).replace('text-', 'border-')} bg-background`}>
-                <AlertTriangle className={getScoreColor(prediction.score)} />
+             <Alert className={`${getBorderColorClass(prediction.score)} bg-background`}>
+                <AlertTriangle className={getScoreColorClass(prediction.score)} />
                 <AlertTitle className="font-semibold">Proactive Alert</AlertTitle>
                 <AlertDescription>{prediction.alert}</AlertDescription>
             </Alert>
