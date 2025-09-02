@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -14,7 +14,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Siren, Loader2 } from "lucide-react";
+import { Siren, Loader2, BellOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { SymptomLog } from "@/lib/types";
 import { sendEmergencyAlert } from "@/lib/sos";
@@ -26,7 +26,24 @@ type EmergencySOSProps = {
 
 export function EmergencySOS({ riskScore, symptomLogs }: EmergencySOSProps) {
   const [isSending, setIsSending] = useState(false);
+  const [isAlarmPlaying, setIsAlarmPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    // This effect runs only on the client
+    audioRef.current = new Audio('/alarm.mp3');
+    audioRef.current.loop = true;
+
+    return () => {
+      // Cleanup audio on component unmount
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
+
 
   const handleSosConfirm = async () => {
     setIsSending(true);
@@ -37,6 +54,11 @@ export function EmergencySOS({ riskScore, symptomLogs }: EmergencySOSProps) {
         description: result,
         duration: 8000,
       });
+      // Play alarm sound on success
+      if (audioRef.current) {
+        audioRef.current.play().catch(e => console.error("Error playing audio:", e));
+        setIsAlarmPlaying(true);
+      }
     } catch (error) {
       toast({
         variant: "destructive",
@@ -47,6 +69,20 @@ export function EmergencySOS({ riskScore, symptomLogs }: EmergencySOSProps) {
       setIsSending(false);
     }
   };
+
+  const stopAlarm = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    setIsAlarmPlaying(false);
+  };
+  
+  const handleCancel = () => {
+    if (isAlarmPlaying) {
+      stopAlarm();
+    }
+  }
 
   return (
     <AlertDialog>
@@ -61,26 +97,42 @@ export function EmergencySOS({ riskScore, symptomLogs }: EmergencySOSProps) {
           <AlertDialogTitle>Confirm Emergency SOS</AlertDialogTitle>
           <AlertDialogDescription>
             This will immediately send an alert with your location and recent health data to your pre-configured emergency contacts.
+             {isAlarmPlaying && (
+              <>
+                <br />
+                <strong className="text-destructive">An audible alarm has been activated.</strong>
+              </>
+            )}
             <br /><br />
             <strong className="text-destructive">Only use this in a genuine emergency.</strong>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isSending}>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={handleSosConfirm}
-            disabled={isSending}
-            className="bg-destructive hover:bg-destructive/90"
-          >
-            {isSending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Sending...
-              </>
-            ) : (
-              "Confirm & Send Alert"
-            )}
-          </AlertDialogAction>
+          <AlertDialogCancel onClick={handleCancel} disabled={isSending}>Cancel</AlertDialogCancel>
+          {isAlarmPlaying ? (
+             <AlertDialogAction
+                onClick={stopAlarm}
+                className="bg-destructive hover:bg-destructive/90"
+              >
+                <BellOff className="mr-2"/>
+                Stop Alarm
+              </AlertDialogAction>
+          ) : (
+             <AlertDialogAction
+              onClick={handleSosConfirm}
+              disabled={isSending}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {isSending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                "Confirm & Send Alert"
+              )}
+            </AlertDialogAction>
+          )}
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
