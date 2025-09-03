@@ -21,4 +21,29 @@ Instead of reacting only when severe symptoms occur, BreatheEasy enables proacti
 ### Impact
 By anticipating early signs of exacerbations, BreatheEasy helps prevent emergency visits and hospitalizations, especially in areas with poor air quality such as Tamil Nadu.  
 
+---
 
+## Setup Instructions
+
+1. Clone the repository:  
+   ```bash
+   cd BreatheEasy
+   git clone <your-repo-url>
+   ```
+2. Install dependencies:
+    ```bash
+   npm install
+   ```
+3. Fix any vulnerabilities (when prompted):
+   ```bash
+   npm audit fix --force
+   ```
+4. Start the development server:
+   ```bash
+   npm run dev
+   ```
+5. Open the local server link shown in the terminal.
+6. When prompted by your browser, allow microphone and location permissions for full functionality.
+
+
+   
